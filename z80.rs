@@ -1,30 +1,23 @@
-use ::libc;
 use ::c2rust_bitfields;
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type C2RustUnnamed = u32;
-pub const Z80_ASSERT: C2RustUnnamed = 2;
-pub const Z80_PULSE: C2RustUnnamed = 1;
-#[derive(Copy, Clone, BitfieldStruct)]
+pub type int8_t = i8;
+pub type int32_t = i32;
+pub type uint8_t = u8;
+pub type uint16_t = u16;
+pub type uint32_t = u32;
+pub const Z80_ASSERT: u32 = 2;
+pub const Z80_PULSE: u32 = 1;
+
+pub trait z80Controller {
+    fn read_byte(&self, addr: u16) -> u8;
+    fn write_byte(&mut self, addr: u16, value: u8);
+}
+
+#[derive(BitfieldStruct)]
 #[repr(C)]
 pub struct z80 {
-    pub read_byte: Option::<
-        unsafe extern "C" fn(*mut libc::c_void, uint16_t) -> uint8_t,
-    >,
-    pub write_byte: Option::<
-        unsafe extern "C" fn(*mut libc::c_void, uint16_t, uint8_t) -> (),
-    >,
+    pub memory: Box<dyn z80Controller>,
     pub port_in: Option::<unsafe extern "C" fn(*mut z80, uint16_t) -> uint8_t>,
     pub port_out: Option::<unsafe extern "C" fn(*mut z80, uint16_t, uint8_t) -> ()>,
-    pub userdata: *mut libc::c_void,
     pub pc: uint16_t,
     pub sp: uint16_t,
     pub ix: uint16_t,
@@ -183,34 +176,24 @@ unsafe extern "C" fn flag_set(z: *mut z80, mut bit: z80_flagbit, mut val: bool) 
         | (val as i32) << bit as u32) as uint8_t;
 }
 #[inline]
-unsafe extern "C" fn rb(z: *mut z80, mut addr: uint16_t) -> uint8_t {
-    return ((*z).read_byte).expect("non-null function pointer")((*z).userdata, addr);
+unsafe fn rb(z: *mut z80, mut addr: uint16_t) -> uint8_t {
+    return (*z).memory.read_byte(addr);
 }
 #[inline]
-unsafe extern "C" fn wb(z: *mut z80, mut addr: uint16_t, mut val: uint8_t) {
-    ((*z).write_byte).expect("non-null function pointer")((*z).userdata, addr, val);
+unsafe fn wb(z: *mut z80, mut addr: uint16_t, mut val: uint8_t) {
+    (*z).memory.write_byte(addr, val);
 }
 #[inline]
-unsafe extern "C" fn rw(z: *mut z80, mut addr: uint16_t) -> uint16_t {
-    return ((((*z).read_byte)
-        .expect(
-            "non-null function pointer",
-        )((*z).userdata, (addr as i32 + 1 as i32) as uint16_t)
-        as i32) << 8 as i32
-        | ((*z).read_byte).expect("non-null function pointer")((*z).userdata, addr)
-            as i32) as uint16_t;
+unsafe fn rw(z: *mut z80, mut addr: uint16_t) -> uint16_t {
+    return (
+        ((*z).memory.read_byte((addr as i32 + 1 as i32) as uint16_t) as i32) << 8 as i32
+        | (*z).memory.read_byte(addr) as i32
+    ) as uint16_t;
 }
 #[inline]
-unsafe extern "C" fn ww(z: *mut z80, mut addr: uint16_t, mut val: uint16_t) {
-    ((*z).write_byte)
-        .expect(
-            "non-null function pointer",
-        )((*z).userdata, addr, (val as i32 & 0xff as i32) as uint8_t);
-    ((*z).write_byte)
-        .expect(
-            "non-null function pointer",
-        )(
-        (*z).userdata,
+unsafe fn ww(z: *mut z80, mut addr: uint16_t, mut val: uint16_t) {
+    (*z).memory.write_byte(addr, (val as i32 & 0xff as i32) as uint8_t);
+    (*z).memory.write_byte(
         (addr as i32 + 1 as i32) as uint16_t,
         (val as i32 >> 8 as i32) as uint8_t,
     );
@@ -984,36 +967,35 @@ unsafe extern "C" fn process_interrupts(z: *mut z80) -> u32 {
     }
     return cyc;
 }
-#[no_mangle]
-pub unsafe extern "C" fn z80_init(z: *mut z80) {
-    (*z).read_byte = None;
-    (*z).write_byte = None;
-    (*z).port_in = None;
-    (*z).port_out = None;
-    (*z).userdata = 0 as *mut libc::c_void;
-    (*z).pc = 0 as i32 as uint16_t;
-    (*z).sp = 0xffff as i32 as uint16_t;
-    (*z).ix = 0 as i32 as uint16_t;
-    (*z).iy = 0 as i32 as uint16_t;
-    (*z).mem_ptr = 0 as i32 as uint16_t;
-    (*z).c2rust_unnamed.af = 0xffff as i32 as uint16_t;
-    (*z).c2rust_unnamed_0.bc = 0 as i32 as uint16_t;
-    (*z).c2rust_unnamed_1.de = 0 as i32 as uint16_t;
-    (*z).c2rust_unnamed_2.hl = 0 as i32 as uint16_t;
-    (*z).c2rust_unnamed_3.a_f_ = 0 as i32 as uint16_t;
-    (*z).c2rust_unnamed_4.b_c_ = 0 as i32 as uint16_t;
-    (*z).c2rust_unnamed_5.d_e_ = 0 as i32 as uint16_t;
-    (*z).c2rust_unnamed_6.h_l_ = 0 as i32 as uint16_t;
-    (*z).i = 0 as i32 as uint8_t;
-    (*z).r = 0 as i32 as uint8_t;
-    (*z).iff_delay = 0 as i32 as uint8_t;
-    (*z).interrupt_mode = 0 as i32 as uint8_t;
-    (*z).set_iff1(0 as i32 != 0);
-    (*z).set_iff2(0 as i32 != 0);
-    (*z).set_halted(0 as i32 != 0);
-    (*z).irq_pending = 0 as i32 as uint8_t;
-    (*z).nmi_pending = 0 as i32 as uint8_t;
-    (*z).irq_data = 0 as i32 as uint8_t;
+
+pub fn z80_init(z: *mut z80) {
+    unsafe {
+        (*z).port_in = None;
+        (*z).port_out = None;
+        (*z).pc = 0 as i32 as uint16_t;
+        (*z).sp = 0xffff as i32 as uint16_t;
+        (*z).ix = 0 as i32 as uint16_t;
+        (*z).iy = 0 as i32 as uint16_t;
+        (*z).mem_ptr = 0 as i32 as uint16_t;
+        (*z).c2rust_unnamed.af = 0xffff as i32 as uint16_t;
+        (*z).c2rust_unnamed_0.bc = 0 as i32 as uint16_t;
+        (*z).c2rust_unnamed_1.de = 0 as i32 as uint16_t;
+        (*z).c2rust_unnamed_2.hl = 0 as i32 as uint16_t;
+        (*z).c2rust_unnamed_3.a_f_ = 0 as i32 as uint16_t;
+        (*z).c2rust_unnamed_4.b_c_ = 0 as i32 as uint16_t;
+        (*z).c2rust_unnamed_5.d_e_ = 0 as i32 as uint16_t;
+        (*z).c2rust_unnamed_6.h_l_ = 0 as i32 as uint16_t;
+        (*z).i = 0 as i32 as uint8_t;
+        (*z).r = 0 as i32 as uint8_t;
+        (*z).iff_delay = 0 as i32 as uint8_t;
+        (*z).interrupt_mode = 0 as i32 as uint8_t;
+        (*z).set_iff1(0 as i32 != 0);
+        (*z).set_iff2(0 as i32 != 0);
+        (*z).set_halted(0 as i32 != 0);
+        (*z).irq_pending = 0 as i32 as uint8_t;
+        (*z).nmi_pending = 0 as i32 as uint8_t;
+        (*z).irq_data = 0 as i32 as uint8_t;
+    }
 }
 #[no_mangle]
 pub unsafe extern "C" fn z80_reset(z: *mut z80) {
@@ -1101,7 +1083,7 @@ pub unsafe extern "C" fn z80_clr_irq(z: *mut z80) {
     (*z).irq_pending = 0 as i32 as uint8_t;
 }
 unsafe extern "C" fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
-    let mut cyc: u32 = 0 as i32 as u32;
+    let mut cyc: u32 = 0;
     inc_r(z);
     match opcode as i32 {
         127 => {

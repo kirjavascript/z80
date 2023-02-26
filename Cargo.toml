@@ -13,6 +13,7 @@ autobins = false
 name = "c2rust_out"
 path = "c2rust-lib.rs"
 crate-type = ["staticlib", "rlib"]
+
 [dependencies]
 c2rust-bitfields= "0.3"
 libc= "0.2"

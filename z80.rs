@@ -7,15 +7,23 @@ pub type uint32_t = u32;
 pub const Z80_ASSERT: u32 = 2;
 pub const Z80_PULSE: u32 = 1;
 
-pub trait z80Controller {
+pub trait z80Mem {
     fn read_byte(&self, addr: u16) -> u8;
     fn write_byte(&mut self, addr: u16, value: u8);
 }
 
+impl z80 {
+
+}
+
+// setup tests
+// impl
+// add port to trait
+
 #[derive(BitfieldStruct)]
 #[repr(C)]
 pub struct z80 {
-    pub memory: Box<dyn z80Controller>,
+    pub memory: Box<dyn z80Mem>,
     pub port_in: Option::<unsafe extern "C" fn(*mut z80, uint16_t) -> uint8_t>,
     pub port_out: Option::<unsafe extern "C" fn(*mut z80, uint16_t, uint8_t) -> ()>,
     pub pc: uint16_t,
@@ -45,6 +53,7 @@ pub struct z80 {
     #[bitfield(padding)]
     pub c2rust_padding: [u8; 6],
 }
+
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub union C2RustUnnamed_0 {
@@ -1043,10 +1052,6 @@ pub unsafe extern "C" fn z80_step_n(
         cyc = cyc.wrapping_add(z80_step_s(z));
     }
     return cyc;
-}
-#[no_mangle]
-pub unsafe extern "C" fn z80_debug_output(z: *mut z80) {
-    !z.is_null();
 }
 #[no_mangle]
 pub unsafe extern "C" fn z80_assert_nmi(z: *mut z80) {

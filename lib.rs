@@ -9,3 +9,6 @@
 #[macro_use]
 extern crate c2rust_bitfields;
 pub mod z80;
+
+#[cfg(tests)]
+mod z80_tests;

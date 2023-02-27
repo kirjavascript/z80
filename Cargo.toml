@@ -2,16 +2,16 @@
 members = [
 ]
 [package]
-name = "c2rust_out"
-authors = ["C2Rust"]
+name = "z80"
+authors = ["kirjavasciprt"]
 version = "0.0.0"
 publish = false
 edition = "2021"
 autobins = false
 
 [lib]
-name = "c2rust_out"
-path = "c2rust-lib.rs"
+name = "z80"
+path = "lib.rs"
 crate-type = ["staticlib", "rlib"]
 
 [dependencies]

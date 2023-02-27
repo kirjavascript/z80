@@ -10,5 +10,5 @@
 extern crate c2rust_bitfields;
 pub mod z80;
 
-#[cfg(tests)]
+#[cfg(test)]
 mod z80_tests;

@@ -12,13 +12,58 @@ pub trait z80Mem {
     fn write_byte(&mut self, addr: u16, value: u8);
 }
 
+// TODO: default implementation for port
+
 impl z80 {
+    pub fn new(memory: Box<dyn z80Mem>) -> Self {
+        z80 {
+            memory,
+            port_in: None,
+            port_out: None,
+            pc: 0,
+            sp: 0,
+            ix: 0,
+            iy: 0,
+            mem_ptr: 0,
+            c2rust_unnamed: C2RustUnnamed_14 {
+                c2rust_unnamed: C2RustUnnamed_15 { f: 0, a: 0, },
+            },
+            c2rust_unnamed_0: C2RustUnnamed_12 {
+                c2rust_unnamed: C2RustUnnamed_13 { c: 0, b: 0, },
+            },
+            c2rust_unnamed_1: C2RustUnnamed_10 {
+                c2rust_unnamed: C2RustUnnamed_11 { e: 0, d: 0, },
+            },
+            c2rust_unnamed_2: C2RustUnnamed_8 {
+                c2rust_unnamed: C2RustUnnamed_9 { l: 0, h: 0, },
+            },
+            c2rust_unnamed_3: C2RustUnnamed_6 {
+                c2rust_unnamed: C2RustUnnamed_7 { f_: 0, a_: 0, },
+            },
+            c2rust_unnamed_4: C2RustUnnamed_4 {
+                c2rust_unnamed: C2RustUnnamed_5 { c_: 0, b_: 0, },
+            },
+            c2rust_unnamed_5: C2RustUnnamed_2 {
+                c2rust_unnamed: C2RustUnnamed_3 { e_: 0, d_: 0, },
+            },
+            c2rust_unnamed_6: C2RustUnnamed_0 {
+                c2rust_unnamed: C2RustUnnamed_1 { l_: 0, h_: 0, },
+            },
+            i: 0,
+            r: 0,
+            iff_delay: 0,
+            interrupt_mode: 0,
+            irq_data: 0,
+            irq_pending: 0,
+            nmi_pending: 0,
+            iff1_iff2_halted: [0; 1],
+            c2rust_padding: [0; 6],
+        }
+    }
+    fn init(&mut self) {
 
+    }
 }
-
-// setup tests
-// impl
-// add port to trait
 
 #[derive(BitfieldStruct)]
 #[repr(C)]

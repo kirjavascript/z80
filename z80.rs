@@ -7,21 +7,17 @@ pub type uint32_t = u32;
 pub const Z80_ASSERT: u32 = 2;
 pub const Z80_PULSE: u32 = 1;
 
-pub trait z80Mem {
+pub trait z80Ctrl {
     fn read_byte(&self, addr: u16) -> u8;
     fn write_byte(&mut self, addr: u16, value: u8);
-}
-
-pub trait z80Port {
-    fn r#in(&self, addr: u16) -> u8;
-    fn out(&mut self, addr: u16, value: u8);
+    fn port_in(&self, addr: u16) -> u8;
+    fn port_out(&mut self, addr: u16, value: u8);
 }
 
 #[derive(BitfieldStruct)]
 #[repr(C)]
 pub struct z80 {
-    pub memory: Box<dyn z80Mem>,
-    pub port: Box<dyn z80Port>,
+    pub ctrl: Box<dyn z80Ctrl>,
     pub pc: uint16_t,
     pub sp: uint16_t,
     pub ix: uint16_t,
@@ -51,10 +47,9 @@ pub struct z80 {
 }
 
 impl z80 {
-    pub fn new(memory: Box<dyn z80Mem>, port: Box<dyn z80Port>) -> Self {
+    pub fn new(ctrl: Box<dyn z80Ctrl>) -> Self {
         z80 {
-            memory,
-            port,
+            ctrl,
             pc: 0,
             sp: 0,
             ix: 0,
@@ -254,23 +249,23 @@ unsafe extern "C" fn flag_set(z: *mut z80, mut bit: z80_flagbit, mut val: bool) 
 }
 #[inline]
 unsafe fn rb(z: *mut z80, mut addr: uint16_t) -> uint8_t {
-    return (*z).memory.read_byte(addr);
+    return (*z).ctrl.read_byte(addr);
 }
 #[inline]
 unsafe fn wb(z: *mut z80, mut addr: uint16_t, mut val: uint8_t) {
-    (*z).memory.write_byte(addr, val);
+    (*z).ctrl.write_byte(addr, val);
 }
 #[inline]
 unsafe fn rw(z: *mut z80, mut addr: uint16_t) -> uint16_t {
     return (
-        ((*z).memory.read_byte((addr as i32 + 1 as i32) as uint16_t) as i32) << 8 as i32
-        | (*z).memory.read_byte(addr) as i32
+        ((*z).ctrl.read_byte((addr as i32 + 1 as i32) as uint16_t) as i32) << 8 as i32
+        | (*z).ctrl.read_byte(addr) as i32
     ) as uint16_t;
 }
 #[inline]
 unsafe fn ww(z: *mut z80, mut addr: uint16_t, mut val: uint16_t) {
-    (*z).memory.write_byte(addr, (val as i32 & 0xff as i32) as uint8_t);
-    (*z).memory.write_byte(
+    (*z).ctrl.write_byte(addr, (val as i32 & 0xff as i32) as uint8_t);
+    (*z).ctrl.write_byte(
         (addr as i32 + 1 as i32) as uint16_t,
         (val as i32 >> 8 as i32) as uint8_t,
     );
@@ -793,7 +788,7 @@ unsafe extern "C" fn cpd(z: *mut z80) {
     (*z).mem_ptr = ((*z).mem_ptr as i32 - 2 as i32) as uint16_t;
 }
 unsafe extern "C" fn in_r_c(z: *mut z80, mut r: *mut uint8_t) {
-    *r = (*z).port.r#in((*z).c2rust_unnamed_0.bc);
+    *r = (*z).ctrl.port_in((*z).c2rust_unnamed_0.bc);
     flag_set(z, zf, *r as i32 == 0 as i32);
     flag_set(z, sf, *r as i32 >> 7 as i32 != 0);
     flag_set(z, pf, parity(*r));
@@ -801,7 +796,7 @@ unsafe extern "C" fn in_r_c(z: *mut z80, mut r: *mut uint8_t) {
     flag_set(z, hf, 0 as i32 != 0);
 }
 unsafe extern "C" fn ini(z: *mut z80) {
-    let mut tmp: u32 = (*z).port.r#in((*z).c2rust_unnamed_0.bc)
+    let mut tmp: u32 = (*z).ctrl.port_in((*z).c2rust_unnamed_0.bc)
         as u32;
     let mut tmp2: u32 = tmp
         .wrapping_add(
@@ -836,7 +831,7 @@ unsafe extern "C" fn ini(z: *mut z80) {
         as uint8_t;
 }
 unsafe extern "C" fn ind(z: *mut z80) {
-    let mut tmp: u32 = (*z).port.r#in((*z).c2rust_unnamed_0.bc)
+    let mut tmp: u32 = (*z).ctrl.port_in((*z).c2rust_unnamed_0.bc)
         as u32;
     let mut tmp2: u32 = tmp
         .wrapping_add(
@@ -873,7 +868,7 @@ unsafe extern "C" fn ind(z: *mut z80) {
 unsafe extern "C" fn outi(z: *mut z80) {
     let mut tmp: u32 = rb(z, (*z).c2rust_unnamed_2.hl) as u32;
     let mut tmp2: u32 = 0;
-    (*z).port.out((*z).c2rust_unnamed_0.bc, tmp as uint8_t);
+    (*z).ctrl.port_out((*z).c2rust_unnamed_0.bc, tmp as uint8_t);
     (*z).c2rust_unnamed_2.hl = ((*z).c2rust_unnamed_2.hl).wrapping_add(1);
     (*z)
         .c2rust_unnamed_0
@@ -910,7 +905,7 @@ unsafe extern "C" fn outd(z: *mut z80) {
         as uint16_t;
 }
 unsafe extern "C" fn outc(z: *mut z80, mut data: uint8_t) {
-    (*z).port.out((*z).c2rust_unnamed_0.bc, data);
+    (*z).ctrl.port_out((*z).c2rust_unnamed_0.bc, data);
     (*z)
         .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 + 1 as i32)
         as uint16_t;
@@ -2848,7 +2843,7 @@ unsafe extern "C" fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
-                .a = (*z).port.r#in(port);
+                .a = (*z).ctrl.port_in(port);
             (*z).mem_ptr = (port as i32 + 1 as i32) as uint16_t;
         }
         211 => {
@@ -2856,7 +2851,7 @@ unsafe extern "C" fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             let port_0: uint16_t = (nextb(z) as i32
                 | ((*z).c2rust_unnamed.c2rust_unnamed.a as i32)
                     << 8 as i32) as uint16_t;
-            (*z).port.out(port_0, (*z).c2rust_unnamed.c2rust_unnamed.a);
+            (*z).ctrl.port_out(port_0, (*z).c2rust_unnamed.c2rust_unnamed.a);
             (*z)
                 .mem_ptr = (port_0 as i32 + 1 as i32
                 & 0xff as i32

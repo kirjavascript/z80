@@ -12,6 +12,8 @@ pub trait z80Ctrl {
     fn write_byte(&mut self, addr: u16, value: u8);
     fn port_in(&self, addr: u16) -> u8;
     fn port_out(&mut self, addr: u16, value: u8);
+    #[cfg(test)]
+    fn test_finished(&self) -> bool;
 }
 
 #[derive(BitfieldStruct)]
@@ -90,7 +92,7 @@ impl z80 {
             c2rust_padding: [0; 6],
         }
     }
-    fn init(&mut self) {
+    pub fn init(&mut self) {
         self.pc = 0 as i32 as uint16_t;
         self.sp = 0xffff as i32 as uint16_t;
         self.ix = 0 as i32 as uint16_t;
@@ -114,6 +116,9 @@ impl z80 {
         self.irq_pending = 0 as i32 as uint8_t;
         self.nmi_pending = 0 as i32 as uint8_t;
         self.irq_data = 0 as i32 as uint8_t;
+    }
+    pub fn step(&mut self) -> u32 {
+        unsafe { z80_step_s(self) }
     }
 }
 
@@ -1064,10 +1069,6 @@ pub unsafe extern "C" fn z80_set_pc(z: *mut z80, mut pc: uint16_t) {
 #[no_mangle]
 pub unsafe extern "C" fn z80_set_sp(z: *mut z80, mut sp: uint16_t) {
     (*z).sp = sp;
-}
-#[no_mangle]
-pub unsafe extern "C" fn z80_step(z: *mut z80) -> u32 {
-    return z80_step_s(z);
 }
 #[no_mangle]
 pub unsafe extern "C" fn z80_step_n(

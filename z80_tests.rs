@@ -1,6 +1,5 @@
-use crate::z80::{z80, z80Mem};
+use crate::z80::{z80, z80Mem, z80Port};
 
-#[derive(Debug)]
 struct Memory {
     mem: [u8; 0x10000],
 }
@@ -15,12 +14,21 @@ impl z80Mem for Memory {
     }
 }
 
+struct Port;
+
+impl z80Port for Port {
+    fn r#in(&self, addr: u16) -> u8 {
+        0
+    }
+    fn out(&mut self, addr: u16, value: u8) {
+    }
+}
 
 #[test]
-pub fn main_0() {
-    let memory = Memory {
+pub fn main() {
+    let memory = Box::new(Memory {
         mem: [0; 0x10000],
-    };
-    let cpu = z80::new(Box::new(memory));
+    });
+    let cpu = z80::new(memory, Box::new(Port));
 
 }

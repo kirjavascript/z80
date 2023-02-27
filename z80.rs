@@ -12,14 +12,49 @@ pub trait z80Mem {
     fn write_byte(&mut self, addr: u16, value: u8);
 }
 
-// TODO: default implementation for port
+pub trait z80Port {
+    fn r#in(&self, addr: u16) -> u8;
+    fn out(&mut self, addr: u16, value: u8);
+}
+
+#[derive(BitfieldStruct)]
+#[repr(C)]
+pub struct z80 {
+    pub memory: Box<dyn z80Mem>,
+    pub port: Box<dyn z80Port>,
+    pub pc: uint16_t,
+    pub sp: uint16_t,
+    pub ix: uint16_t,
+    pub iy: uint16_t,
+    pub mem_ptr: uint16_t,
+    pub c2rust_unnamed: C2RustUnnamed_14,
+    pub c2rust_unnamed_0: C2RustUnnamed_12,
+    pub c2rust_unnamed_1: C2RustUnnamed_10,
+    pub c2rust_unnamed_2: C2RustUnnamed_8,
+    pub c2rust_unnamed_3: C2RustUnnamed_6,
+    pub c2rust_unnamed_4: C2RustUnnamed_4,
+    pub c2rust_unnamed_5: C2RustUnnamed_2,
+    pub c2rust_unnamed_6: C2RustUnnamed_0,
+    pub i: uint8_t,
+    pub r: uint8_t,
+    pub iff_delay: uint8_t,
+    pub interrupt_mode: uint8_t,
+    pub irq_data: uint8_t,
+    pub irq_pending: uint8_t,
+    pub nmi_pending: uint8_t,
+    #[bitfield(name = "iff1", ty = "bool", bits = "0..=0")]
+    #[bitfield(name = "iff2", ty = "bool", bits = "1..=1")]
+    #[bitfield(name = "halted", ty = "bool", bits = "2..=2")]
+    pub iff1_iff2_halted: [u8; 1],
+    #[bitfield(padding)]
+    pub c2rust_padding: [u8; 6],
+}
 
 impl z80 {
-    pub fn new(memory: Box<dyn z80Mem>) -> Self {
+    pub fn new(memory: Box<dyn z80Mem>, port: Box<dyn z80Port>) -> Self {
         z80 {
             memory,
-            port_in: None,
-            port_out: None,
+            port,
             pc: 0,
             sp: 0,
             ix: 0,
@@ -61,42 +96,30 @@ impl z80 {
         }
     }
     fn init(&mut self) {
-
+        self.pc = 0 as i32 as uint16_t;
+        self.sp = 0xffff as i32 as uint16_t;
+        self.ix = 0 as i32 as uint16_t;
+        self.iy = 0 as i32 as uint16_t;
+        self.mem_ptr = 0 as i32 as uint16_t;
+        self.c2rust_unnamed.af = 0xffff as i32 as uint16_t;
+        self.c2rust_unnamed_0.bc = 0 as i32 as uint16_t;
+        self.c2rust_unnamed_1.de = 0 as i32 as uint16_t;
+        self.c2rust_unnamed_2.hl = 0 as i32 as uint16_t;
+        self.c2rust_unnamed_3.a_f_ = 0 as i32 as uint16_t;
+        self.c2rust_unnamed_4.b_c_ = 0 as i32 as uint16_t;
+        self.c2rust_unnamed_5.d_e_ = 0 as i32 as uint16_t;
+        self.c2rust_unnamed_6.h_l_ = 0 as i32 as uint16_t;
+        self.i = 0 as i32 as uint8_t;
+        self.r = 0 as i32 as uint8_t;
+        self.iff_delay = 0 as i32 as uint8_t;
+        self.interrupt_mode = 0 as i32 as uint8_t;
+        self.set_iff1(0 as i32 != 0);
+        self.set_iff2(0 as i32 != 0);
+        self.set_halted(0 as i32 != 0);
+        self.irq_pending = 0 as i32 as uint8_t;
+        self.nmi_pending = 0 as i32 as uint8_t;
+        self.irq_data = 0 as i32 as uint8_t;
     }
-}
-
-#[derive(BitfieldStruct)]
-#[repr(C)]
-pub struct z80 {
-    pub memory: Box<dyn z80Mem>,
-    pub port_in: Option::<unsafe extern "C" fn(*mut z80, uint16_t) -> uint8_t>,
-    pub port_out: Option::<unsafe extern "C" fn(*mut z80, uint16_t, uint8_t) -> ()>,
-    pub pc: uint16_t,
-    pub sp: uint16_t,
-    pub ix: uint16_t,
-    pub iy: uint16_t,
-    pub mem_ptr: uint16_t,
-    pub c2rust_unnamed: C2RustUnnamed_14,
-    pub c2rust_unnamed_0: C2RustUnnamed_12,
-    pub c2rust_unnamed_1: C2RustUnnamed_10,
-    pub c2rust_unnamed_2: C2RustUnnamed_8,
-    pub c2rust_unnamed_3: C2RustUnnamed_6,
-    pub c2rust_unnamed_4: C2RustUnnamed_4,
-    pub c2rust_unnamed_5: C2RustUnnamed_2,
-    pub c2rust_unnamed_6: C2RustUnnamed_0,
-    pub i: uint8_t,
-    pub r: uint8_t,
-    pub iff_delay: uint8_t,
-    pub interrupt_mode: uint8_t,
-    pub irq_data: uint8_t,
-    pub irq_pending: uint8_t,
-    pub nmi_pending: uint8_t,
-    #[bitfield(name = "iff1", ty = "bool", bits = "0..=0")]
-    #[bitfield(name = "iff2", ty = "bool", bits = "1..=1")]
-    #[bitfield(name = "halted", ty = "bool", bits = "2..=2")]
-    pub iff1_iff2_halted: [u8; 1],
-    #[bitfield(padding)]
-    pub c2rust_padding: [u8; 6],
 }
 
 #[derive(Copy, Clone)]
@@ -770,7 +793,7 @@ unsafe extern "C" fn cpd(z: *mut z80) {
     (*z).mem_ptr = ((*z).mem_ptr as i32 - 2 as i32) as uint16_t;
 }
 unsafe extern "C" fn in_r_c(z: *mut z80, mut r: *mut uint8_t) {
-    *r = ((*z).port_in).expect("non-null function pointer")(z, (*z).c2rust_unnamed_0.bc);
+    *r = (*z).port.r#in((*z).c2rust_unnamed_0.bc);
     flag_set(z, zf, *r as i32 == 0 as i32);
     flag_set(z, sf, *r as i32 >> 7 as i32 != 0);
     flag_set(z, pf, parity(*r));
@@ -778,8 +801,7 @@ unsafe extern "C" fn in_r_c(z: *mut z80, mut r: *mut uint8_t) {
     flag_set(z, hf, 0 as i32 != 0);
 }
 unsafe extern "C" fn ini(z: *mut z80) {
-    let mut tmp: u32 = ((*z).port_in)
-        .expect("non-null function pointer")(z, (*z).c2rust_unnamed_0.bc)
+    let mut tmp: u32 = (*z).port.r#in((*z).c2rust_unnamed_0.bc)
         as u32;
     let mut tmp2: u32 = tmp
         .wrapping_add(
@@ -814,8 +836,7 @@ unsafe extern "C" fn ini(z: *mut z80) {
         as uint8_t;
 }
 unsafe extern "C" fn ind(z: *mut z80) {
-    let mut tmp: u32 = ((*z).port_in)
-        .expect("non-null function pointer")(z, (*z).c2rust_unnamed_0.bc)
+    let mut tmp: u32 = (*z).port.r#in((*z).c2rust_unnamed_0.bc)
         as u32;
     let mut tmp2: u32 = tmp
         .wrapping_add(
@@ -852,10 +873,7 @@ unsafe extern "C" fn ind(z: *mut z80) {
 unsafe extern "C" fn outi(z: *mut z80) {
     let mut tmp: u32 = rb(z, (*z).c2rust_unnamed_2.hl) as u32;
     let mut tmp2: u32 = 0;
-    ((*z).port_out)
-        .expect(
-            "non-null function pointer",
-        )(z, (*z).c2rust_unnamed_0.bc, tmp as uint8_t);
+    (*z).port.out((*z).c2rust_unnamed_0.bc, tmp as uint8_t);
     (*z).c2rust_unnamed_2.hl = ((*z).c2rust_unnamed_2.hl).wrapping_add(1);
     (*z)
         .c2rust_unnamed_0
@@ -892,8 +910,7 @@ unsafe extern "C" fn outd(z: *mut z80) {
         as uint16_t;
 }
 unsafe extern "C" fn outc(z: *mut z80, mut data: uint8_t) {
-    ((*z).port_out)
-        .expect("non-null function pointer")(z, (*z).c2rust_unnamed_0.bc, data);
+    (*z).port.out((*z).c2rust_unnamed_0.bc, data);
     (*z)
         .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 + 1 as i32)
         as uint16_t;
@@ -1020,36 +1037,6 @@ unsafe extern "C" fn process_interrupts(z: *mut z80) -> u32 {
         return cyc;
     }
     return cyc;
-}
-
-pub fn z80_init(z: *mut z80) {
-    unsafe {
-        (*z).port_in = None;
-        (*z).port_out = None;
-        (*z).pc = 0 as i32 as uint16_t;
-        (*z).sp = 0xffff as i32 as uint16_t;
-        (*z).ix = 0 as i32 as uint16_t;
-        (*z).iy = 0 as i32 as uint16_t;
-        (*z).mem_ptr = 0 as i32 as uint16_t;
-        (*z).c2rust_unnamed.af = 0xffff as i32 as uint16_t;
-        (*z).c2rust_unnamed_0.bc = 0 as i32 as uint16_t;
-        (*z).c2rust_unnamed_1.de = 0 as i32 as uint16_t;
-        (*z).c2rust_unnamed_2.hl = 0 as i32 as uint16_t;
-        (*z).c2rust_unnamed_3.a_f_ = 0 as i32 as uint16_t;
-        (*z).c2rust_unnamed_4.b_c_ = 0 as i32 as uint16_t;
-        (*z).c2rust_unnamed_5.d_e_ = 0 as i32 as uint16_t;
-        (*z).c2rust_unnamed_6.h_l_ = 0 as i32 as uint16_t;
-        (*z).i = 0 as i32 as uint8_t;
-        (*z).r = 0 as i32 as uint8_t;
-        (*z).iff_delay = 0 as i32 as uint8_t;
-        (*z).interrupt_mode = 0 as i32 as uint8_t;
-        (*z).set_iff1(0 as i32 != 0);
-        (*z).set_iff2(0 as i32 != 0);
-        (*z).set_halted(0 as i32 != 0);
-        (*z).irq_pending = 0 as i32 as uint8_t;
-        (*z).nmi_pending = 0 as i32 as uint8_t;
-        (*z).irq_data = 0 as i32 as uint8_t;
-    }
 }
 #[no_mangle]
 pub unsafe extern "C" fn z80_reset(z: *mut z80) {
@@ -2861,7 +2848,7 @@ unsafe extern "C" fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
-                .a = ((*z).port_in).expect("non-null function pointer")(z, port);
+                .a = (*z).port.r#in(port);
             (*z).mem_ptr = (port as i32 + 1 as i32) as uint16_t;
         }
         211 => {
@@ -2869,10 +2856,7 @@ unsafe extern "C" fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             let port_0: uint16_t = (nextb(z) as i32
                 | ((*z).c2rust_unnamed.c2rust_unnamed.a as i32)
                     << 8 as i32) as uint16_t;
-            ((*z).port_out)
-                .expect(
-                    "non-null function pointer",
-                )(z, port_0, (*z).c2rust_unnamed.c2rust_unnamed.a);
+            (*z).port.out(port_0, (*z).c2rust_unnamed.c2rust_unnamed.a);
             (*z)
                 .mem_ptr = (port_0 as i32 + 1 as i32
                 & 0xff as i32

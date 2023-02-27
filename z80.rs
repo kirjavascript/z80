@@ -120,6 +120,32 @@ impl z80 {
     pub fn step(&mut self) -> u32 {
         unsafe { z80_step_s(self) }
     }
+    fn internal_port_in(&self, addr: u16) -> u8 {
+        #[cfg(test)]
+        unsafe {
+            let mut operation = self.c2rust_unnamed_0.c2rust_unnamed.c;
+            if operation == 2{
+                print!( "{}", self.c2rust_unnamed_1.c2rust_unnamed.e);
+            } else if operation == 9 {
+                let mut addr = ((self.c2rust_unnamed_1.c2rust_unnamed.d as i32)
+                    << 8 as i32 | self.c2rust_unnamed_1.c2rust_unnamed.e as i32)
+                    as u16;
+                loop {
+                    let fresh0 = addr;
+                    addr = addr.wrapping_add(1);
+                    print!("{}", String::from_utf8(vec![self.ctrl.read_byte(fresh0)]).unwrap());
+                    if !(self.ctrl.read_byte(addr) as i32 != '$' as i32 as i32) {
+                        break;
+                    }
+                }
+            }
+
+        }
+        self.ctrl.port_in(addr)
+    }
+    fn internal_port_out(&mut self, addr: u16, value: u8) {
+        self.ctrl.port_out(addr, value);
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -793,7 +819,7 @@ unsafe extern "C" fn cpd(z: *mut z80) {
     (*z).mem_ptr = ((*z).mem_ptr as i32 - 2 as i32) as uint16_t;
 }
 unsafe extern "C" fn in_r_c(z: *mut z80, mut r: *mut uint8_t) {
-    *r = (*z).ctrl.port_in((*z).c2rust_unnamed_0.bc);
+    *r = (*z).internal_port_in((*z).c2rust_unnamed_0.bc);
     flag_set(z, zf, *r as i32 == 0 as i32);
     flag_set(z, sf, *r as i32 >> 7 as i32 != 0);
     flag_set(z, pf, parity(*r));
@@ -801,7 +827,7 @@ unsafe extern "C" fn in_r_c(z: *mut z80, mut r: *mut uint8_t) {
     flag_set(z, hf, 0 as i32 != 0);
 }
 unsafe extern "C" fn ini(z: *mut z80) {
-    let mut tmp: u32 = (*z).ctrl.port_in((*z).c2rust_unnamed_0.bc)
+    let mut tmp: u32 = (*z).internal_port_in((*z).c2rust_unnamed_0.bc)
         as u32;
     let mut tmp2: u32 = tmp
         .wrapping_add(
@@ -836,7 +862,7 @@ unsafe extern "C" fn ini(z: *mut z80) {
         as uint8_t;
 }
 unsafe extern "C" fn ind(z: *mut z80) {
-    let mut tmp: u32 = (*z).ctrl.port_in((*z).c2rust_unnamed_0.bc)
+    let mut tmp: u32 = (*z).internal_port_in((*z).c2rust_unnamed_0.bc)
         as u32;
     let mut tmp2: u32 = tmp
         .wrapping_add(
@@ -873,7 +899,7 @@ unsafe extern "C" fn ind(z: *mut z80) {
 unsafe extern "C" fn outi(z: *mut z80) {
     let mut tmp: u32 = rb(z, (*z).c2rust_unnamed_2.hl) as u32;
     let mut tmp2: u32 = 0;
-    (*z).ctrl.port_out((*z).c2rust_unnamed_0.bc, tmp as uint8_t);
+    (*z).internal_port_out((*z).c2rust_unnamed_0.bc, tmp as uint8_t);
     (*z).c2rust_unnamed_2.hl = ((*z).c2rust_unnamed_2.hl).wrapping_add(1);
     (*z)
         .c2rust_unnamed_0
@@ -910,7 +936,7 @@ unsafe extern "C" fn outd(z: *mut z80) {
         as uint16_t;
 }
 unsafe extern "C" fn outc(z: *mut z80, mut data: uint8_t) {
-    (*z).ctrl.port_out((*z).c2rust_unnamed_0.bc, data);
+    (*z).internal_port_out((*z).c2rust_unnamed_0.bc, data);
     (*z)
         .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 + 1 as i32)
         as uint16_t;
@@ -2844,7 +2870,7 @@ unsafe extern "C" fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
-                .a = (*z).ctrl.port_in(port);
+                .a = (*z).internal_port_in(port);
             (*z).mem_ptr = (port as i32 + 1 as i32) as uint16_t;
         }
         211 => {
@@ -2852,7 +2878,7 @@ unsafe extern "C" fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             let port_0: uint16_t = (nextb(z) as i32
                 | ((*z).c2rust_unnamed.c2rust_unnamed.a as i32)
                     << 8 as i32) as uint16_t;
-            (*z).ctrl.port_out(port_0, (*z).c2rust_unnamed.c2rust_unnamed.a);
+            (*z).internal_port_out(port_0, (*z).c2rust_unnamed.c2rust_unnamed.a);
             (*z)
                 .mem_ptr = (port_0 as i32 + 1 as i32
                 & 0xff as i32

@@ -13,10 +13,10 @@ impl z80Ctrl for Memory {
     fn write_byte(&mut self, addr: u16, value: u8) {
         self.mem[addr as usize] = value;
     }
-    fn port_in(&self, addr: u16) -> u8 {
+    fn port_in(&self, _addr: u16) -> u8 {
         0xff
     }
-    fn port_out(&mut self, addr: u16, value: u8) {
+    fn port_out(&mut self, _addr: u16, _value: u8) {
         self.test_finished = true;
     }
     fn test_finished(&self) -> bool {
@@ -35,7 +35,6 @@ fn run_test(rom: &[u8], cyc_expected: u64) {
     }
 
     let mut cyc: u64 = 0;
-        println!("{:#?}", 1);
 
     let mut cpu = z80::new(memory);
     cpu.init();

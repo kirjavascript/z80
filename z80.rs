@@ -27,7 +27,6 @@ SOFTWARE.
 
 */
 
-use ::c2rust_bitfields;
 pub type int8_t = i8;
 pub type int32_t = i32;
 pub type uint8_t = u8;
@@ -45,8 +44,6 @@ pub trait z80Ctrl {
     fn test_finished(&self) -> bool;
 }
 
-#[derive(BitfieldStruct)]
-#[repr(C)]
 pub struct z80 {
     pub ctrl: Box<dyn z80Ctrl>,
     pub pc: uint16_t,
@@ -69,10 +66,9 @@ pub struct z80 {
     pub irq_data: uint8_t,
     pub irq_pending: uint8_t,
     pub nmi_pending: uint8_t,
-    #[bitfield(name = "iff1", ty = "bool", bits = "0..=0")]
-    #[bitfield(name = "iff2", ty = "bool", bits = "1..=1")]
-    #[bitfield(name = "halted", ty = "bool", bits = "2..=2")]
-    pub iff1_iff2_halted: [u8; 1],
+    halted: bool,
+    iff1: bool,
+    iff2: bool,
 }
 
 impl z80 {
@@ -115,7 +111,10 @@ impl z80 {
             irq_data: 0,
             irq_pending: 0,
             nmi_pending: 0,
-            iff1_iff2_halted: [0; 1],
+            // iff1_iff2_halted: [0; 1],
+            halted: false,
+            iff1: false,
+            iff2: false,
         }
     }
     pub fn init(&mut self) {
@@ -136,9 +135,9 @@ impl z80 {
         self.r = 0 as i32 as uint8_t;
         self.iff_delay = 0 as i32 as uint8_t;
         self.interrupt_mode = 0 as i32 as uint8_t;
-        self.set_iff1(0 as i32 != 0);
-        self.set_iff2(0 as i32 != 0);
-        self.set_halted(0 as i32 != 0);
+        self.iff1 = 0 as i32 != 0;
+        self.iff2 = 0 as i32 != 0;
+        self.halted = 0 as i32 != 0;
         self.irq_pending = 0 as i32 as uint8_t;
         self.nmi_pending = 0 as i32 as uint8_t;
         self.irq_data = 0 as i32 as uint8_t;
@@ -175,98 +174,82 @@ impl z80 {
 }
 
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub union C2RustUnnamed_0 {
+union C2RustUnnamed_0 {
     pub c2rust_unnamed: C2RustUnnamed_1,
     pub h_l_: uint16_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub struct C2RustUnnamed_1 {
+struct C2RustUnnamed_1 {
     pub l_: uint8_t,
     pub h_: uint8_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub union C2RustUnnamed_2 {
+union C2RustUnnamed_2 {
     pub c2rust_unnamed: C2RustUnnamed_3,
     pub d_e_: uint16_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub struct C2RustUnnamed_3 {
+struct C2RustUnnamed_3 {
     pub e_: uint8_t,
     pub d_: uint8_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub union C2RustUnnamed_4 {
+union C2RustUnnamed_4 {
     pub c2rust_unnamed: C2RustUnnamed_5,
     pub b_c_: uint16_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub struct C2RustUnnamed_5 {
+struct C2RustUnnamed_5 {
     pub c_: uint8_t,
     pub b_: uint8_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub union C2RustUnnamed_6 {
+union C2RustUnnamed_6 {
     pub c2rust_unnamed: C2RustUnnamed_7,
     pub a_f_: uint16_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub struct C2RustUnnamed_7 {
+struct C2RustUnnamed_7 {
     pub f_: uint8_t,
     pub a_: uint8_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub union C2RustUnnamed_8 {
+union C2RustUnnamed_8 {
     pub c2rust_unnamed: C2RustUnnamed_9,
     pub hl: uint16_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub struct C2RustUnnamed_9 {
+struct C2RustUnnamed_9 {
     pub l: uint8_t,
     pub h: uint8_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub union C2RustUnnamed_10 {
+union C2RustUnnamed_10 {
     pub c2rust_unnamed: C2RustUnnamed_11,
     pub de: uint16_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub struct C2RustUnnamed_11 {
+struct C2RustUnnamed_11 {
     pub e: uint8_t,
     pub d: uint8_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub union C2RustUnnamed_12 {
+union C2RustUnnamed_12 {
     pub c2rust_unnamed: C2RustUnnamed_13,
     pub bc: uint16_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub struct C2RustUnnamed_13 {
+struct C2RustUnnamed_13 {
     pub c: uint8_t,
     pub b: uint8_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub union C2RustUnnamed_14 {
+union C2RustUnnamed_14 {
     pub c2rust_unnamed: C2RustUnnamed_15,
     pub af: uint16_t,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
-pub struct C2RustUnnamed_15 {
+struct C2RustUnnamed_15 {
     pub f: uint8_t,
     pub a: uint8_t,
 }
@@ -1040,8 +1023,8 @@ unsafe fn process_interrupts(z: *mut z80) -> u32 {
     if (*z).iff_delay as i32 > 0 as i32 {
         (*z).iff_delay = ((*z).iff_delay as i32 - 1 as i32) as uint8_t;
         if (*z).iff_delay as i32 == 0 as i32 {
-            (*z).set_iff1(1 as i32 != 0);
-            (*z).set_iff2(1 as i32 != 0);
+            (*z).iff1 = 1 as i32 != 0;
+            (*z).iff2 = 1 as i32 != 0;
         }
         return cyc;
     }
@@ -1049,20 +1032,20 @@ unsafe fn process_interrupts(z: *mut z80) -> u32 {
         (*z)
             .nmi_pending = ((*z).nmi_pending as i32
             & !(Z80_PULSE as i32)) as uint8_t;
-        (*z).set_halted(0 as i32 != 0);
-        (*z).set_iff1(0 as i32 != 0);
+        (*z).halted = 0 as i32 != 0;
+        (*z).iff1 = 0 as i32 != 0;
         inc_r(z);
         cyc = cyc.wrapping_add(11 as i32 as u32);
         call(z, 0x66 as i32 as uint16_t);
         return cyc;
     }
-    if (*z).irq_pending as i32 != 0 && (*z).iff1() as i32 != 0 {
+    if (*z).irq_pending as i32 != 0 && (*z).iff1 as i32 != 0 {
         (*z)
             .irq_pending = ((*z).irq_pending as i32
             & !(Z80_PULSE as i32)) as uint8_t;
-        (*z).set_halted(0 as i32 != 0);
-        (*z).set_iff1(0 as i32 != 0);
-        (*z).set_iff2(0 as i32 != 0);
+        (*z).halted = 0 as i32 != 0;
+        (*z).iff1 = 0 as i32 != 0;
+        (*z).iff2 = 0 as i32 != 0;
         inc_r(z);
         match (*z).interrupt_mode as i32 {
             0 => {
@@ -1098,14 +1081,14 @@ pub unsafe fn z80_reset(z: *mut z80) {
     (*z).r = 0 as i32 as uint8_t;
     (*z).interrupt_mode = 0 as i32 as uint8_t;
     (*z).iff_delay = 0 as i32 as uint8_t;
-    (*z).set_iff1(0 as i32 != 0);
-    (*z).set_iff2(0 as i32 != 0);
-    (*z).set_halted(0 as i32 != 0);
+    (*z).iff1 = 0 as i32 != 0;
+    (*z).iff2 = 0 as i32 != 0;
+    (*z).halted = 0 as i32 != 0;
     (*z).nmi_pending = 0 as i32 as uint8_t;
 }
 unsafe fn z80_step_s(z: *mut z80) -> u32 {
     let mut cyc: u32 = 0 as i32 as u32;
-    if (*z).halted() {
+    if (*z).halted {
         cyc = cyc.wrapping_add(exec_opcode(z, 0 as i32 as uint8_t));
     } else {
         let opcode: uint8_t = nextb(z);
@@ -2142,8 +2125,8 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
         }
         243 => {
             cyc = cyc.wrapping_add(4 as i32 as u32);
-            (*z).set_iff2(0 as i32 != 0);
-            (*z).set_iff1((*z).iff2());
+            (*z).iff2 = 0 as i32 != 0;
+            (*z).iff1 = (*z).iff2;
         }
         251 => {
             cyc = cyc.wrapping_add(4 as i32 as u32);
@@ -2154,7 +2137,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
         }
         118 => {
             cyc = cyc.wrapping_add(4 as i32 as u32);
-            (*z).set_halted(1 as i32 != 0);
+            (*z).halted = 1 as i32 != 0;
         }
         60 => {
             cyc = cyc.wrapping_add(4 as i32 as u32);
@@ -3768,7 +3751,7 @@ unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
             flag_set(z, hf, 0 as i32 != 0);
             flag_set(z, nf, 0 as i32 != 0);
-            flag_set(z, pf, (*z).iff2());
+            flag_set(z, pf, (*z).iff2);
         }
         95 => {
             cyc = cyc.wrapping_add(9 as i32 as u32);
@@ -3786,11 +3769,11 @@ unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
             flag_set(z, hf, 0 as i32 != 0);
             flag_set(z, nf, 0 as i32 != 0);
-            flag_set(z, pf, (*z).iff2());
+            flag_set(z, pf, (*z).iff2);
         }
         69 | 85 | 93 | 101 | 109 | 117 | 125 => {
             cyc = cyc.wrapping_add(14 as i32 as u32);
-            (*z).set_iff1((*z).iff2());
+            (*z).iff1 = (*z).iff2;
             ret(z);
         }
         77 => {

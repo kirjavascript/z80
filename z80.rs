@@ -35,7 +35,7 @@ type uint32_t = u32;
 const ASSERT: u32 = 2;
 const PULSE: u32 = 1;
 
-pub trait Z80Ctrl {
+pub trait Z80_io {
     fn read_byte(&self, addr: u16) -> u8;
     fn write_byte(&mut self, addr: u16, value: u8);
     fn port_in(&self, addr: u16) -> u8;
@@ -45,8 +45,8 @@ pub trait Z80Ctrl {
 // pub struct Z80 <T: z80Ctrl>{
 //     pub ctrl: T,
 
-pub struct Z80 {
-    pub ctrl: Box<dyn Z80Ctrl>,
+pub struct Z80 <T: Z80_io> {
+    pub ctrl: T,
     pub pc: uint16_t,
     pub sp: uint16_t,
     pub ix: uint16_t,
@@ -74,8 +74,8 @@ pub struct Z80 {
     pub test_finished: bool,
 }
 
-impl Z80 {
-    pub fn new(ctrl: Box<dyn Z80Ctrl>) -> Self {
+impl<T: Z80_io> Z80<T> {
+    pub fn new(ctrl: T) -> Self {
         Z80 {
             ctrl,
             pc: 0,
@@ -298,12 +298,12 @@ unsafe fn flag_val(mut bit: Flagbit, mut cond: bool) -> uint8_t {
     return ((cond as i32) << bit as u32) as uint8_t;
 }
 #[inline]
-unsafe fn flag_get(z: *mut Z80, mut bit: Flagbit) -> bool {
+unsafe fn flag_get<T: Z80_io>(z: *mut Z80<T>, mut bit: Flagbit) -> bool {
     return (*z).c2rust_unnamed.c2rust_unnamed.f as i32
         & (1 as i32) << bit as u32 != 0;
 }
 #[inline]
-unsafe fn flag_set(z: *mut Z80, mut bit: Flagbit, mut val: bool) {
+unsafe fn flag_set<T: Z80_io>(z: *mut Z80<T>, mut bit: Flagbit, mut val: bool) {
     (*z)
         .c2rust_unnamed
         .c2rust_unnamed
@@ -316,22 +316,22 @@ unsafe fn flag_set(z: *mut Z80, mut bit: Flagbit, mut val: bool) {
         | (val as i32) << bit as u32) as uint8_t;
 }
 #[inline]
-unsafe fn rb(z: *mut Z80, mut addr: uint16_t) -> uint8_t {
+unsafe fn rb<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t) -> uint8_t {
     return (*z).ctrl.read_byte(addr);
 }
 #[inline]
-unsafe fn wb(z: *mut Z80, mut addr: uint16_t, mut val: uint8_t) {
+unsafe fn wb<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t, mut val: uint8_t) {
     (*z).ctrl.write_byte(addr, val);
 }
 #[inline]
-unsafe fn rw(z: *mut Z80, mut addr: uint16_t) -> uint16_t {
+unsafe fn rw<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t) -> uint16_t {
     return (
         ((*z).ctrl.read_byte((addr as i32 + 1 as i32) as uint16_t) as i32) << 8 as i32
         | (*z).ctrl.read_byte(addr) as i32
     ) as uint16_t;
 }
 #[inline]
-unsafe fn ww(z: *mut Z80, mut addr: uint16_t, mut val: uint16_t) {
+unsafe fn ww<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t, mut val: uint16_t) {
     (*z).ctrl.write_byte(addr, (val as i32 & 0xff as i32) as uint8_t);
     (*z).ctrl.write_byte(
         (addr as i32 + 1 as i32) as uint16_t,
@@ -339,28 +339,28 @@ unsafe fn ww(z: *mut Z80, mut addr: uint16_t, mut val: uint16_t) {
     );
 }
 #[inline]
-unsafe fn pushw(z: *mut Z80, mut val: uint16_t) {
+unsafe fn pushw<T: Z80_io>(z: *mut Z80<T>, mut val: uint16_t) {
     (*z).sp = ((*z).sp as i32 - 2 as i32) as uint16_t;
     ww(z, (*z).sp, val);
 }
 #[inline]
-unsafe fn popw(z: *mut Z80) -> uint16_t {
+unsafe fn popw<T: Z80_io>(z: *mut Z80<T>) -> uint16_t {
     (*z).sp = ((*z).sp as i32 + 2 as i32) as uint16_t;
     return rw(z, ((*z).sp as i32 - 2 as i32) as uint16_t);
 }
 #[inline]
-unsafe fn nextb(z: *mut Z80) -> uint8_t {
+unsafe fn nextb<T: Z80_io>(z: *mut Z80<T>) -> uint8_t {
     let fresh0 = (*z).pc;
     (*z).pc = ((*z).pc).wrapping_add(1);
     return rb(z, fresh0);
 }
 #[inline]
-unsafe fn nextw(z: *mut Z80) -> uint16_t {
+unsafe fn nextw<T: Z80_io>(z: *mut Z80<T>) -> uint16_t {
     (*z).pc = ((*z).pc as i32 + 2 as i32) as uint16_t;
     return rw(z, ((*z).pc as i32 - 2 as i32) as uint16_t);
 }
 #[inline]
-unsafe fn inc_r(z: *mut Z80) {
+unsafe fn inc_r<T: Z80_io>(z: *mut Z80<T>) {
     (*z)
         .r = ((*z).r as i32 & 0x80 as i32
         | (*z).r as i32 + 1 as i32 & 0x7f as i32) as uint8_t;
@@ -372,12 +372,12 @@ unsafe fn parity(mut v: uint8_t) -> bool {
     return 0x6996 as i32 >> v as i32 & 1 as i32 == 0;
 }
 #[inline]
-unsafe fn jump(z: *mut Z80, mut addr: uint16_t) {
+unsafe fn jump<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t) {
     (*z).pc = addr;
     (*z).mem_ptr = addr;
 }
 #[inline]
-unsafe fn cond_jump(z: *mut Z80, mut condition: bool) {
+unsafe fn cond_jump<T: Z80_io>(z: *mut Z80<T>, mut condition: bool) {
     let addr: uint16_t = nextw(z);
     if condition {
         jump(z, addr);
@@ -385,13 +385,13 @@ unsafe fn cond_jump(z: *mut Z80, mut condition: bool) {
     (*z).mem_ptr = addr;
 }
 #[inline]
-unsafe fn call(z: *mut Z80, mut addr: uint16_t) {
+unsafe fn call<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t) {
     pushw(z, (*z).pc);
     (*z).pc = addr;
     (*z).mem_ptr = addr;
 }
 #[inline]
-unsafe fn cond_call(z: *mut Z80, mut condition: bool) -> u32 {
+unsafe fn cond_call<T: Z80_io>(z: *mut Z80<T>, mut condition: bool) -> u32 {
     let addr: uint16_t = nextw(z);
     let mut cyc: u32 = 0;
     if condition {
@@ -402,12 +402,12 @@ unsafe fn cond_call(z: *mut Z80, mut condition: bool) -> u32 {
     return cyc;
 }
 #[inline]
-unsafe fn ret(z: *mut Z80) {
+unsafe fn ret<T: Z80_io>(z: *mut Z80<T>) {
     (*z).pc = popw(z);
     (*z).mem_ptr = (*z).pc;
 }
 #[inline]
-unsafe fn cond_ret(z: *mut Z80, mut condition: bool) -> u32 {
+unsafe fn cond_ret<T: Z80_io>(z: *mut Z80<T>, mut condition: bool) -> u32 {
     if condition {
         ret(z);
         return 6;
@@ -415,12 +415,12 @@ unsafe fn cond_ret(z: *mut Z80, mut condition: bool) -> u32 {
     return 0;
 }
 #[inline]
-unsafe fn jr(z: *mut Z80, mut displacement: int8_t) {
+unsafe fn jr<T: Z80_io>(z: *mut Z80<T>, mut displacement: int8_t) {
     (*z).pc = ((*z).pc as i32 + displacement as i32) as uint16_t;
     (*z).mem_ptr = (*z).pc;
 }
 #[inline]
-unsafe fn cond_jr(z: *mut Z80, mut condition: bool) -> u32 {
+unsafe fn cond_jr<T: Z80_io>(z: *mut Z80<T>, mut condition: bool) -> u32 {
     let b: int8_t = nextb(z) as int8_t;
     if condition {
         jr(z, b);
@@ -429,8 +429,8 @@ unsafe fn cond_jr(z: *mut Z80, mut condition: bool) -> u32 {
     return 0;
 }
 #[inline]
-unsafe fn addb(
-    z: *mut Z80,
+unsafe fn addb<T: Z80_io>(
+    z: *mut Z80<T>,
     mut a: uint32_t,
     mut b: uint32_t,
     mut cy: bool,
@@ -463,8 +463,8 @@ unsafe fn addb(
     return result as uint8_t;
 }
 #[inline]
-unsafe fn subb(
-    z: *mut Z80,
+unsafe fn subb<T: Z80_io>(
+    z: *mut Z80<T>,
     mut a: uint32_t,
     mut b: uint32_t,
     mut cy: bool,
@@ -498,8 +498,8 @@ unsafe fn subb(
     return result as uint8_t;
 }
 #[inline]
-unsafe fn addw(
-    z: *mut Z80,
+unsafe fn addw<T: Z80_io>(
+    z: *mut Z80<T>,
     mut a: uint16_t,
     mut b: uint16_t,
     mut cy: bool,
@@ -518,8 +518,8 @@ unsafe fn addw(
     return result;
 }
 #[inline]
-unsafe fn subw(
-    z: *mut Z80,
+unsafe fn subw<T: Z80_io>(
+    z: *mut Z80<T>,
     mut a: uint16_t,
     mut b: uint16_t,
     mut cy: bool,
@@ -538,7 +538,7 @@ unsafe fn subw(
     return result;
 }
 #[inline]
-unsafe fn addhl(z: *mut Z80, mut val: uint16_t) {
+unsafe fn addhl<T: Z80_io>(z: *mut Z80<T>, mut val: uint16_t) {
     let mut sfc: bool = flag_get(z, sf);
     let mut zfc: bool = flag_get(z, zf);
     let mut pfc: bool = flag_get(z, pf);
@@ -554,7 +554,7 @@ unsafe fn addhl(z: *mut Z80, mut val: uint16_t) {
     flag_set(z, pf, pfc);
 }
 #[inline]
-unsafe fn addiz(z: *mut Z80, mut reg: *mut uint16_t, mut val: uint16_t) {
+unsafe fn addiz<T: Z80_io>(z: *mut Z80<T>, mut reg: *mut uint16_t, mut val: uint16_t) {
     let mut sfc: bool = flag_get(z, sf);
     let mut zfc: bool = flag_get(z, zf);
     let mut pfc: bool = flag_get(z, pf);
@@ -565,21 +565,21 @@ unsafe fn addiz(z: *mut Z80, mut reg: *mut uint16_t, mut val: uint16_t) {
     flag_set(z, pf, pfc);
 }
 #[inline]
-unsafe fn adchl(z: *mut Z80, mut val: uint16_t) {
+unsafe fn adchl<T: Z80_io>(z: *mut Z80<T>, mut val: uint16_t) {
     let mut result: uint16_t = addw(z, (*z).c2rust_unnamed_2.hl, val, flag_get(z, cf));
     flag_set(z, sf, result as i32 >> 15 as i32 != 0);
     flag_set(z, zf, result as i32 == 0 as i32);
     (*z).c2rust_unnamed_2.hl = result;
 }
 #[inline]
-unsafe fn sbchl(z: *mut Z80, mut val: uint16_t) {
+unsafe fn sbchl<T: Z80_io>(z: *mut Z80<T>, mut val: uint16_t) {
     let result: uint16_t = subw(z, (*z).c2rust_unnamed_2.hl, val, flag_get(z, cf));
     flag_set(z, sf, result as i32 >> 15 as i32 != 0);
     flag_set(z, zf, result as i32 == 0 as i32);
     (*z).c2rust_unnamed_2.hl = result;
 }
 #[inline]
-unsafe fn inc(z: *mut Z80, mut a: uint8_t) -> uint8_t {
+unsafe fn inc<T: Z80_io>(z: *mut Z80<T>, mut a: uint8_t) -> uint8_t {
     let mut cfc: bool = flag_get(z, cf);
     let mut result: uint8_t = addb(
         z,
@@ -591,7 +591,7 @@ unsafe fn inc(z: *mut Z80, mut a: uint8_t) -> uint8_t {
     return result;
 }
 #[inline]
-unsafe fn dec(z: *mut Z80, mut a: uint8_t) -> uint8_t {
+unsafe fn dec<T: Z80_io>(z: *mut Z80<T>, mut a: uint8_t) -> uint8_t {
     let mut cfc: bool = flag_get(z, cf);
     let mut result: uint8_t = subb(
         z,
@@ -603,7 +603,7 @@ unsafe fn dec(z: *mut Z80, mut a: uint8_t) -> uint8_t {
     return result;
 }
 #[inline]
-unsafe fn land(z: *mut Z80, mut val: uint8_t) {
+unsafe fn land<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) {
     let result: uint8_t = ((*z).c2rust_unnamed.c2rust_unnamed.a as i32
         & val as i32) as uint8_t;
     (*z)
@@ -616,7 +616,7 @@ unsafe fn land(z: *mut Z80, mut val: uint8_t) {
     (*z).c2rust_unnamed.c2rust_unnamed.a = result;
 }
 #[inline]
-unsafe fn lxor(z: *mut Z80, val: uint8_t) {
+unsafe fn lxor<T: Z80_io>(z: *mut Z80<T>, val: uint8_t) {
     let result: uint8_t = ((*z).c2rust_unnamed.c2rust_unnamed.a as i32
         ^ val as i32) as uint8_t;
     (*z)
@@ -629,7 +629,7 @@ unsafe fn lxor(z: *mut Z80, val: uint8_t) {
     (*z).c2rust_unnamed.c2rust_unnamed.a = result;
 }
 #[inline]
-unsafe fn lor(z: *mut Z80, val: uint8_t) {
+unsafe fn lor<T: Z80_io>(z: *mut Z80<T>, val: uint8_t) {
     let result: uint8_t = ((*z).c2rust_unnamed.c2rust_unnamed.a as i32
         | val as i32) as uint8_t;
     (*z)
@@ -642,7 +642,7 @@ unsafe fn lor(z: *mut Z80, val: uint8_t) {
     (*z).c2rust_unnamed.c2rust_unnamed.a = result;
 }
 #[inline]
-unsafe fn cp(z: *mut Z80, val: uint32_t) {
+unsafe fn cp<T: Z80_io>(z: *mut Z80<T>, val: uint32_t) {
     let mut result: int32_t = ((*z).c2rust_unnamed.c2rust_unnamed.a as u32)
         .wrapping_sub(val) as int32_t;
     let mut carry: int32_t = ((result
@@ -676,7 +676,7 @@ unsafe fn cp(z: *mut Z80, val: uint32_t) {
         | carry >> 2 as i32 & 1 as i32) as uint8_t;
 }
 #[inline]
-unsafe fn cb_rlc(z: *mut Z80, mut val: uint8_t) -> uint8_t {
+unsafe fn cb_rlc<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) -> uint8_t {
     let old: bool = val as i32 >> 7 as i32 != 0;
     val = ((val as i32) << 1 as i32 | old as i32) as uint8_t;
     (*z)
@@ -689,7 +689,7 @@ unsafe fn cb_rlc(z: *mut Z80, mut val: uint8_t) -> uint8_t {
     return val;
 }
 #[inline]
-unsafe fn cb_rrc(z: *mut Z80, mut val: uint8_t) -> uint8_t {
+unsafe fn cb_rrc<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) -> uint8_t {
     let old: bool = val as i32 & 1 as i32 != 0;
     val = (val as i32 >> 1 as i32
         | (old as i32) << 7 as i32) as uint8_t;
@@ -703,7 +703,7 @@ unsafe fn cb_rrc(z: *mut Z80, mut val: uint8_t) -> uint8_t {
     return val;
 }
 #[inline]
-unsafe fn cb_rl(z: *mut Z80, mut val: uint8_t) -> uint8_t {
+unsafe fn cb_rl<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) -> uint8_t {
     let cfc: bool = flag_get(z, cf);
     let cfn: bool = val as i32 >> 7 as i32 != 0;
     val = ((val as i32) << 1 as i32 | cfc as i32) as uint8_t;
@@ -716,7 +716,7 @@ unsafe fn cb_rl(z: *mut Z80, mut val: uint8_t) -> uint8_t {
     return val;
 }
 #[inline]
-unsafe fn cb_rr(z: *mut Z80, mut val: uint8_t) -> uint8_t {
+unsafe fn cb_rr<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) -> uint8_t {
     let c: bool = flag_get(z, cf);
     let cfn: bool = val as i32 & 1 as i32 != 0;
     val = (val as i32 >> 1 as i32
@@ -730,7 +730,7 @@ unsafe fn cb_rr(z: *mut Z80, mut val: uint8_t) -> uint8_t {
     return val;
 }
 #[inline]
-unsafe fn cb_sla(z: *mut Z80, mut val: uint8_t) -> uint8_t {
+unsafe fn cb_sla<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) -> uint8_t {
     let cfn: bool = val as i32 >> 7 as i32 != 0;
     val = ((val as i32) << 1 as i32) as uint8_t;
     (*z)
@@ -742,7 +742,7 @@ unsafe fn cb_sla(z: *mut Z80, mut val: uint8_t) -> uint8_t {
     return val;
 }
 #[inline]
-unsafe fn cb_sll(z: *mut Z80, mut val: uint8_t) -> uint8_t {
+unsafe fn cb_sll<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) -> uint8_t {
     let cfn: bool = val as i32 >> 7 as i32 != 0;
     val = ((val as i32) << 1 as i32) as uint8_t;
     val = (val as i32 | 1 as i32) as uint8_t;
@@ -755,7 +755,7 @@ unsafe fn cb_sll(z: *mut Z80, mut val: uint8_t) -> uint8_t {
     return val;
 }
 #[inline]
-unsafe fn cb_sra(z: *mut Z80, mut val: uint8_t) -> uint8_t {
+unsafe fn cb_sra<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) -> uint8_t {
     let cfn: bool = val as i32 & 1 as i32 != 0;
     val = (val as i32 >> 1 as i32
         | val as i32 & 0x80 as i32) as uint8_t;
@@ -768,7 +768,7 @@ unsafe fn cb_sra(z: *mut Z80, mut val: uint8_t) -> uint8_t {
     return val;
 }
 #[inline]
-unsafe fn cb_srl(z: *mut Z80, mut val: uint8_t) -> uint8_t {
+unsafe fn cb_srl<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t) -> uint8_t {
     let cfn: bool = val as i32 & 1 as i32 != 0;
     val = (val as i32 >> 1 as i32) as uint8_t;
     (*z)
@@ -780,7 +780,7 @@ unsafe fn cb_srl(z: *mut Z80, mut val: uint8_t) -> uint8_t {
     return val;
 }
 #[inline]
-unsafe fn cb_bit(z: *mut Z80, mut val: uint8_t, mut n: uint8_t) -> uint8_t {
+unsafe fn cb_bit<T: Z80_io>(z: *mut Z80<T>, mut val: uint8_t, mut n: uint8_t) -> uint8_t {
     let result: uint8_t = (val as i32 & (1 as i32) << n as i32)
         as uint8_t;
     (*z)
@@ -793,7 +793,7 @@ unsafe fn cb_bit(z: *mut Z80, mut val: uint8_t, mut n: uint8_t) -> uint8_t {
     return result;
 }
 #[inline]
-unsafe fn ldi(z: *mut Z80) {
+unsafe fn ldi<T: Z80_io>(z: *mut Z80<T>) {
     let de: uint16_t = (*z).c2rust_unnamed_1.de;
     let hl: uint16_t = (*z).c2rust_unnamed_2.hl;
     let val: uint8_t = rb(z, hl);
@@ -810,7 +810,7 @@ unsafe fn ldi(z: *mut Z80) {
     flag_set(z, pf, (*z).c2rust_unnamed_0.bc as i32 > 0 as i32);
 }
 #[inline]
-unsafe fn ldd(z: *mut Z80) {
+unsafe fn ldd<T: Z80_io>(z: *mut Z80<T>) {
     ldi(z);
     (*z)
         .c2rust_unnamed_2
@@ -820,7 +820,7 @@ unsafe fn ldd(z: *mut Z80) {
         .de = ((*z).c2rust_unnamed_1.de as i32 - 2 as i32) as uint16_t;
 }
 #[inline]
-unsafe fn cpi(z: *mut Z80) {
+unsafe fn cpi<T: Z80_io>(z: *mut Z80<T>) {
     let mut cfc: bool = flag_get(z, cf);
     let result: uint8_t = subb(
         z,
@@ -848,14 +848,14 @@ unsafe fn cpi(z: *mut Z80) {
     (*z).mem_ptr = ((*z).mem_ptr as i32 + 1 as i32) as uint16_t;
 }
 #[inline]
-unsafe fn cpd(z: *mut Z80) {
+unsafe fn cpd<T: Z80_io>(z: *mut Z80<T>) {
     cpi(z);
     (*z)
         .c2rust_unnamed_2
         .hl = ((*z).c2rust_unnamed_2.hl as i32 - 2 as i32) as uint16_t;
     (*z).mem_ptr = ((*z).mem_ptr as i32 - 2 as i32) as uint16_t;
 }
-unsafe fn in_r_c(z: *mut Z80, mut r: *mut uint8_t) {
+unsafe fn in_r_c<T: Z80_io>(z: *mut Z80<T>, mut r: *mut uint8_t) {
     *r = (*z).internal_port_in((*z).c2rust_unnamed_0.bc);
     flag_set(z, zf, *r as i32 == 0 as i32);
     flag_set(z, sf, *r as i32 >> 7 as i32 != 0);
@@ -863,7 +863,7 @@ unsafe fn in_r_c(z: *mut Z80, mut r: *mut uint8_t) {
     flag_set(z, nf, 0 as i32 != 0);
     flag_set(z, hf, 0 as i32 != 0);
 }
-unsafe fn ini(z: *mut Z80) {
+unsafe fn ini<T: Z80_io>(z: *mut Z80<T>) {
     let mut tmp: u32 = (*z).internal_port_in((*z).c2rust_unnamed_0.bc)
         as u32;
     let mut tmp2: u32 = tmp
@@ -898,7 +898,7 @@ unsafe fn ini(z: *mut Z80) {
         | flag_val(cf, tmp2 > 255) as i32)
         as uint8_t;
 }
-unsafe fn ind(z: *mut Z80) {
+unsafe fn ind<T: Z80_io>(z: *mut Z80<T>) {
     let mut tmp: u32 = (*z).internal_port_in((*z).c2rust_unnamed_0.bc)
         as u32;
     let mut tmp2: u32 = tmp
@@ -933,7 +933,7 @@ unsafe fn ind(z: *mut Z80) {
         | flag_val(cf, tmp2 > 255) as i32)
         as uint8_t;
 }
-unsafe fn outi(z: *mut Z80) {
+unsafe fn outi<T: Z80_io>(z: *mut Z80<T>) {
     let mut tmp: u32 = rb(z, (*z).c2rust_unnamed_2.hl) as u32;
     let mut tmp2: u32 = 0;
     (*z).internal_port_out((*z).c2rust_unnamed_0.bc, tmp as uint8_t);
@@ -963,7 +963,7 @@ unsafe fn outi(z: *mut Z80) {
         .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 + 1 as i32)
         as uint16_t;
 }
-unsafe fn outd(z: *mut Z80) {
+unsafe fn outd<T: Z80_io>(z: *mut Z80<T>) {
     outi(z);
     (*z)
         .c2rust_unnamed_2
@@ -972,13 +972,13 @@ unsafe fn outd(z: *mut Z80) {
         .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 - 2 as i32)
         as uint16_t;
 }
-unsafe fn outc(z: *mut Z80, mut data: uint8_t) {
+unsafe fn outc<T: Z80_io>(z: *mut Z80<T>, mut data: uint8_t) {
     (*z).internal_port_out((*z).c2rust_unnamed_0.bc, data);
     (*z)
         .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 + 1 as i32)
         as uint16_t;
 }
-unsafe fn daa(z: *mut Z80) {
+unsafe fn daa<T: Z80_io>(z: *mut Z80<T>) {
     let mut correction: uint8_t = 0 as i32 as uint8_t;
     if (*z).c2rust_unnamed.c2rust_unnamed.a as i32 & 0xf as i32
         > 0x9 as i32 || flag_get(z, hf) as i32 != 0
@@ -1035,8 +1035,8 @@ unsafe fn daa(z: *mut Z80) {
         as uint8_t;
 }
 #[inline]
-unsafe fn displace(
-    z: *mut Z80,
+unsafe fn displace<T: Z80_io>(
+    z: *mut Z80<T>,
     mut base_addr: uint16_t,
     mut displacement: int8_t,
 ) -> uint16_t {
@@ -1046,7 +1046,7 @@ unsafe fn displace(
     return addr;
 }
 #[inline]
-unsafe fn process_interrupts(z: *mut Z80) -> u32 {
+unsafe fn process_interrupts<T: Z80_io>(z: *mut Z80<T>) -> u32 {
     let mut cyc: u32 = 0;
     if (*z).iff_delay as i32 > 0 as i32 {
         (*z).iff_delay = ((*z).iff_delay as i32 - 1 as i32) as uint8_t;
@@ -1102,7 +1102,7 @@ unsafe fn process_interrupts(z: *mut Z80) -> u32 {
     return cyc;
 }
 #[no_mangle]
-pub unsafe fn reset(z: *mut Z80) {
+pub unsafe fn reset<T: Z80_io>(z: *mut Z80<T>) {
     (*z).pc = 0 as i32 as uint16_t;
     (*z).mem_ptr = 0 as i32 as uint16_t;
     (*z).i = 0 as i32 as uint8_t;
@@ -1114,7 +1114,7 @@ pub unsafe fn reset(z: *mut Z80) {
     (*z).halted = 0 as i32 != 0;
     (*z).nmi_pending = 0 as i32 as uint8_t;
 }
-unsafe fn step_s(z: *mut Z80) -> u32 {
+unsafe fn step_s<T: Z80_io>(z: *mut Z80<T>) -> u32 {
     let mut cyc: u32 = 0;
     if (*z).halted {
         cyc = cyc.wrapping_add(exec_opcode(z, 0 as i32 as uint8_t));
@@ -1126,16 +1126,16 @@ unsafe fn step_s(z: *mut Z80) -> u32 {
     return cyc;
 }
 #[no_mangle]
-pub unsafe fn set_pc(z: *mut Z80, mut pc: uint16_t) {
+pub unsafe fn set_pc<T: Z80_io>(z: *mut Z80<T>, mut pc: uint16_t) {
     (*z).pc = pc;
 }
 #[no_mangle]
-pub unsafe fn set_sp(z: *mut Z80, mut sp: uint16_t) {
+pub unsafe fn set_sp<T: Z80_io>(z: *mut Z80<T>, mut sp: uint16_t) {
     (*z).sp = sp;
 }
 #[no_mangle]
-pub unsafe fn step_n(
-    z: *mut Z80,
+pub unsafe fn step_n<T: Z80_io>(
+    z: *mut Z80<T>,
     mut cycles: u32,
 ) -> u32 {
     let mut cyc: u32 = 0;
@@ -1145,40 +1145,40 @@ pub unsafe fn step_n(
     return cyc;
 }
 #[no_mangle]
-pub unsafe fn assert_nmi(z: *mut Z80) {
+pub unsafe fn assert_nmi<T: Z80_io>(z: *mut Z80<T>) {
     (*z)
         .nmi_pending = ((*z).nmi_pending as i32 | ASSERT as i32)
         as uint8_t;
 }
 #[no_mangle]
-pub unsafe fn pulse_nmi(z: *mut Z80) {
+pub unsafe fn pulse_nmi<T: Z80_io>(z: *mut Z80<T>) {
     (*z)
         .nmi_pending = ((*z).nmi_pending as i32 | PULSE as i32)
         as uint8_t;
 }
 #[no_mangle]
-pub unsafe fn clr_nmi(z: *mut Z80) {
+pub unsafe fn clr_nmi<T: Z80_io>(z: *mut Z80<T>) {
     (*z).nmi_pending = 0 as i32 as uint8_t;
 }
 #[no_mangle]
-pub unsafe fn assert_irq(z: *mut Z80, mut data: uint8_t) {
+pub unsafe fn assert_irq<T: Z80_io>(z: *mut Z80<T>, mut data: uint8_t) {
     (*z)
         .irq_pending = ((*z).irq_pending as i32 | ASSERT as i32)
         as uint8_t;
     (*z).irq_data = data;
 }
 #[no_mangle]
-pub unsafe fn pulse_irq(z: *mut Z80, mut data: uint8_t) {
+pub unsafe fn pulse_irq<T: Z80_io>(z: *mut Z80<T>, mut data: uint8_t) {
     (*z)
         .irq_pending = ((*z).irq_pending as i32 | PULSE as i32)
         as uint8_t;
     (*z).irq_data = data;
 }
 #[no_mangle]
-pub unsafe fn clr_irq(z: *mut Z80) {
+pub unsafe fn clr_irq<T: Z80_io>(z: *mut Z80<T>) {
     (*z).irq_pending = 0 as i32 as uint8_t;
 }
-unsafe fn exec_opcode(z: *mut Z80, mut opcode: uint8_t) -> u32 {
+unsafe fn exec_opcode<T: Z80_io>(z: *mut Z80<T>, mut opcode: uint8_t) -> u32 {
     let mut cyc: u32 = 0;
     inc_r(z);
     match opcode as i32 {
@@ -2960,8 +2960,8 @@ unsafe fn exec_opcode(z: *mut Z80, mut opcode: uint8_t) -> u32 {
     }
     return cyc;
 }
-unsafe fn exec_opcode_ddfd(
-    z: *mut Z80,
+unsafe fn exec_opcode_ddfd<T: Z80_io>(
+    z: *mut Z80<T>,
     mut opcode: uint8_t,
     iz: *mut uint16_t,
 ) -> u32 {
@@ -3533,7 +3533,7 @@ unsafe fn exec_opcode_ddfd(
     }
     return cyc;
 }
-unsafe fn exec_opcode_cb(z: *mut Z80, mut opcode: uint8_t) -> u32 {
+unsafe fn exec_opcode_cb<T: Z80_io>(z: *mut Z80<T>, mut opcode: uint8_t) -> u32 {
     let mut cyc: u32 = 8;
     inc_r(z);
     let mut x_: uint8_t = (opcode as i32 >> 6 as i32 & 3 as i32)
@@ -3646,8 +3646,8 @@ unsafe fn exec_opcode_cb(z: *mut Z80, mut opcode: uint8_t) -> u32 {
     }
     return cyc;
 }
-unsafe fn exec_opcode_dcb(
-    z: *mut Z80,
+unsafe fn exec_opcode_dcb<T: Z80_io>(
+    z: *mut Z80<T>,
     mut opcode: uint8_t,
     mut addr: uint16_t,
 ) -> u32 {
@@ -3751,7 +3751,7 @@ unsafe fn exec_opcode_dcb(
     }
     return cyc;
 }
-unsafe fn exec_opcode_ed(z: *mut Z80, mut opcode: uint8_t) -> u32 {
+unsafe fn exec_opcode_ed<T: Z80_io>(z: *mut Z80<T>, mut opcode: uint8_t) -> u32 {
     let mut cyc: u32 = 0;
     inc_r(z);
     match opcode as i32 {

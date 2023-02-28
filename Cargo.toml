@@ -3,9 +3,10 @@ members = [
 ]
 [package]
 name = "z80"
-authors = ["kirjavasciprt"]
-version = "0.0.0"
+authors = ["Kirjava"]
+version = "0.0.1"
 edition = "2021"
+license = "MIT"
 
 [lib]
 name = "z80"

@@ -374,10 +374,10 @@ unsafe fn call(z: *mut z80, mut addr: uint16_t) {
 #[inline]
 unsafe fn cond_call(z: *mut z80, mut condition: bool) -> u32 {
     let addr: uint16_t = nextw(z);
-    let mut cyc: u32 = 0 as i32 as u32;
+    let mut cyc: u32 = 0;
     if condition {
         call(z, addr);
-        cyc = 7 as i32 as u32;
+        cyc = 7;
     }
     (*z).mem_ptr = addr;
     return cyc;
@@ -391,9 +391,9 @@ unsafe fn ret(z: *mut z80) {
 unsafe fn cond_ret(z: *mut z80, mut condition: bool) -> u32 {
     if condition {
         ret(z);
-        return 6 as i32 as u32;
+        return 6;
     }
-    return 0 as i32 as u32;
+    return 0;
 }
 #[inline]
 unsafe fn jr(z: *mut z80, mut displacement: int8_t) {
@@ -405,9 +405,9 @@ unsafe fn cond_jr(z: *mut z80, mut condition: bool) -> u32 {
     let b: int8_t = nextb(z) as int8_t;
     if condition {
         jr(z, b);
-        return 5 as i32 as u32;
+        return 5;
     }
-    return 0 as i32 as u32;
+    return 0;
 }
 #[inline]
 unsafe fn addb(
@@ -866,17 +866,17 @@ unsafe fn ini(z: *mut z80) {
         .c2rust_unnamed
         .f = (f_szpxy[(*z).c2rust_unnamed_0.c2rust_unnamed.b as usize] as i32
         & !((1 as i32) << pf as i32)
-        | flag_val(nf, tmp >> 7 as i32 & 1 as i32 as u32 != 0)
+        | flag_val(nf, tmp >> 7 as i32 & 1 != 0)
             as i32
         | flag_val(
             pf,
             parity(
-                (tmp2 & 7 as i32 as u32
+                (tmp2 & 7
                     ^ (*z).c2rust_unnamed_0.c2rust_unnamed.b as u32) as uint8_t,
             ),
         ) as i32
-        | flag_val(hf, tmp2 > 255 as i32 as u32) as i32
-        | flag_val(cf, tmp2 > 255 as i32 as u32) as i32)
+        | flag_val(hf, tmp2 > 255) as i32
+        | flag_val(cf, tmp2 > 255) as i32)
         as uint8_t;
 }
 unsafe fn ind(z: *mut z80) {
@@ -901,17 +901,17 @@ unsafe fn ind(z: *mut z80) {
         .c2rust_unnamed
         .f = (f_szpxy[(*z).c2rust_unnamed_0.c2rust_unnamed.b as usize] as i32
         & !((1 as i32) << pf as i32)
-        | flag_val(nf, tmp >> 7 as i32 & 1 as i32 as u32 != 0)
+        | flag_val(nf, tmp >> 7 as i32 & 1 != 0)
             as i32
         | flag_val(
             pf,
             parity(
-                (tmp2 & 7 as i32 as u32
+                (tmp2 & 7
                     ^ (*z).c2rust_unnamed_0.c2rust_unnamed.b as u32) as uint8_t,
             ),
         ) as i32
-        | flag_val(hf, tmp2 > 255 as i32 as u32) as i32
-        | flag_val(cf, tmp2 > 255 as i32 as u32) as i32)
+        | flag_val(hf, tmp2 > 255) as i32
+        | flag_val(cf, tmp2 > 255) as i32)
         as uint8_t;
 }
 unsafe fn outi(z: *mut z80) {
@@ -928,18 +928,18 @@ unsafe fn outi(z: *mut z80) {
         .c2rust_unnamed
         .c2rust_unnamed
         .f = f_szpxy[(*z).c2rust_unnamed_0.c2rust_unnamed.b as usize];
-    flag_set(z, nf, tmp >> 7 as i32 & 1 as i32 as u32 != 0);
+    flag_set(z, nf, tmp >> 7 as i32 & 1 != 0);
     tmp2 = tmp.wrapping_add((*z).c2rust_unnamed_2.c2rust_unnamed.l as u32);
     flag_set(
         z,
         pf,
         parity(
-            (tmp2 & 7 as i32 as u32
+            (tmp2 & 7
                 ^ (*z).c2rust_unnamed_0.c2rust_unnamed.b as u32) as uint8_t,
         ),
     );
-    flag_set(z, hf, tmp2 > 255 as i32 as u32);
-    flag_set(z, cf, tmp2 > 255 as i32 as u32);
+    flag_set(z, hf, tmp2 > 255);
+    flag_set(z, cf, tmp2 > 255);
     (*z)
         .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 + 1 as i32)
         as uint16_t;
@@ -1028,7 +1028,7 @@ unsafe fn displace(
 }
 #[inline]
 unsafe fn process_interrupts(z: *mut z80) -> u32 {
-    let mut cyc: u32 = 0 as i32 as u32;
+    let mut cyc: u32 = 0;
     if (*z).iff_delay as i32 > 0 as i32 {
         (*z).iff_delay = ((*z).iff_delay as i32 - 1 as i32) as uint8_t;
         if (*z).iff_delay as i32 == 0 as i32 {
@@ -1044,7 +1044,7 @@ unsafe fn process_interrupts(z: *mut z80) -> u32 {
         (*z).halted = 0 as i32 != 0;
         (*z).iff1 = 0 as i32 != 0;
         inc_r(z);
-        cyc = cyc.wrapping_add(11 as i32 as u32);
+        cyc = cyc.wrapping_add(11);
         call(z, 0x66 as i32 as uint16_t);
         return cyc;
     }
@@ -1058,15 +1058,15 @@ unsafe fn process_interrupts(z: *mut z80) -> u32 {
         inc_r(z);
         match (*z).interrupt_mode as i32 {
             0 => {
-                cyc = cyc.wrapping_add(11 as i32 as u32);
+                cyc = cyc.wrapping_add(11);
                 cyc = cyc.wrapping_add(exec_opcode(z, (*z).irq_data));
             }
             1 => {
-                cyc = cyc.wrapping_add(13 as i32 as u32);
+                cyc = cyc.wrapping_add(13);
                 call(z, 0x38 as i32 as uint16_t);
             }
             2 => {
-                cyc = cyc.wrapping_add(19 as i32 as u32);
+                cyc = cyc.wrapping_add(19);
                 call(
                     z,
                     rw(
@@ -1096,7 +1096,7 @@ pub unsafe fn z80_reset(z: *mut z80) {
     (*z).nmi_pending = 0 as i32 as uint8_t;
 }
 unsafe fn z80_step_s(z: *mut z80) -> u32 {
-    let mut cyc: u32 = 0 as i32 as u32;
+    let mut cyc: u32 = 0;
     if (*z).halted {
         cyc = cyc.wrapping_add(exec_opcode(z, 0 as i32 as uint8_t));
     } else {
@@ -1119,7 +1119,7 @@ pub unsafe fn z80_step_n(
     z: *mut z80,
     mut cycles: u32,
 ) -> u32 {
-    let mut cyc: u32 = 0 as i32 as u32;
+    let mut cyc: u32 = 0;
     while cyc < cycles {
         cyc = cyc.wrapping_add(z80_step_s(z));
     }
@@ -1164,455 +1164,455 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
     inc_r(z);
     match opcode as i32 {
         127 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z).c2rust_unnamed.c2rust_unnamed.a = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         120 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = (*z).c2rust_unnamed_0.c2rust_unnamed.b;
         }
         121 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = (*z).c2rust_unnamed_0.c2rust_unnamed.c;
         }
         122 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = (*z).c2rust_unnamed_1.c2rust_unnamed.d;
         }
         123 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = (*z).c2rust_unnamed_1.c2rust_unnamed.e;
         }
         124 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = (*z).c2rust_unnamed_2.c2rust_unnamed.h;
         }
         125 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = (*z).c2rust_unnamed_2.c2rust_unnamed.l;
         }
         71 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         64 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*z).c2rust_unnamed_0.c2rust_unnamed.b;
         }
         65 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*z).c2rust_unnamed_0.c2rust_unnamed.c;
         }
         66 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*z).c2rust_unnamed_1.c2rust_unnamed.d;
         }
         67 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*z).c2rust_unnamed_1.c2rust_unnamed.e;
         }
         68 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*z).c2rust_unnamed_2.c2rust_unnamed.h;
         }
         69 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*z).c2rust_unnamed_2.c2rust_unnamed.l;
         }
         79 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         72 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*z).c2rust_unnamed_0.c2rust_unnamed.b;
         }
         73 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*z).c2rust_unnamed_0.c2rust_unnamed.c;
         }
         74 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*z).c2rust_unnamed_1.c2rust_unnamed.d;
         }
         75 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*z).c2rust_unnamed_1.c2rust_unnamed.e;
         }
         76 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*z).c2rust_unnamed_2.c2rust_unnamed.h;
         }
         77 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*z).c2rust_unnamed_2.c2rust_unnamed.l;
         }
         87 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         80 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*z).c2rust_unnamed_0.c2rust_unnamed.b;
         }
         81 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*z).c2rust_unnamed_0.c2rust_unnamed.c;
         }
         82 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*z).c2rust_unnamed_1.c2rust_unnamed.d;
         }
         83 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*z).c2rust_unnamed_1.c2rust_unnamed.e;
         }
         84 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*z).c2rust_unnamed_2.c2rust_unnamed.h;
         }
         85 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*z).c2rust_unnamed_2.c2rust_unnamed.l;
         }
         95 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         88 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*z).c2rust_unnamed_0.c2rust_unnamed.b;
         }
         89 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*z).c2rust_unnamed_0.c2rust_unnamed.c;
         }
         90 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*z).c2rust_unnamed_1.c2rust_unnamed.d;
         }
         91 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*z).c2rust_unnamed_1.c2rust_unnamed.e;
         }
         92 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*z).c2rust_unnamed_2.c2rust_unnamed.h;
         }
         93 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*z).c2rust_unnamed_2.c2rust_unnamed.l;
         }
         103 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         96 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = (*z).c2rust_unnamed_0.c2rust_unnamed.b;
         }
         97 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = (*z).c2rust_unnamed_0.c2rust_unnamed.c;
         }
         98 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = (*z).c2rust_unnamed_1.c2rust_unnamed.d;
         }
         99 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = (*z).c2rust_unnamed_1.c2rust_unnamed.e;
         }
         100 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = (*z).c2rust_unnamed_2.c2rust_unnamed.h;
         }
         101 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = (*z).c2rust_unnamed_2.c2rust_unnamed.l;
         }
         111 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         104 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = (*z).c2rust_unnamed_0.c2rust_unnamed.b;
         }
         105 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = (*z).c2rust_unnamed_0.c2rust_unnamed.c;
         }
         106 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = (*z).c2rust_unnamed_1.c2rust_unnamed.d;
         }
         107 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = (*z).c2rust_unnamed_1.c2rust_unnamed.e;
         }
         108 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = (*z).c2rust_unnamed_2.c2rust_unnamed.h;
         }
         109 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = (*z).c2rust_unnamed_2.c2rust_unnamed.l;
         }
         126 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed.c2rust_unnamed.a = rb(z, (*z).c2rust_unnamed_2.hl);
         }
         70 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_0.c2rust_unnamed.b = rb(z, (*z).c2rust_unnamed_2.hl);
         }
         78 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_0.c2rust_unnamed.c = rb(z, (*z).c2rust_unnamed_2.hl);
         }
         86 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_1.c2rust_unnamed.d = rb(z, (*z).c2rust_unnamed_2.hl);
         }
         94 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_1.c2rust_unnamed.e = rb(z, (*z).c2rust_unnamed_2.hl);
         }
         102 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_2.c2rust_unnamed.h = rb(z, (*z).c2rust_unnamed_2.hl);
         }
         110 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_2.c2rust_unnamed.l = rb(z, (*z).c2rust_unnamed_2.hl);
         }
         119 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_2.hl, (*z).c2rust_unnamed.c2rust_unnamed.a);
         }
         112 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_2.hl, (*z).c2rust_unnamed_0.c2rust_unnamed.b);
         }
         113 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_2.hl, (*z).c2rust_unnamed_0.c2rust_unnamed.c);
         }
         114 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_2.hl, (*z).c2rust_unnamed_1.c2rust_unnamed.d);
         }
         115 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_2.hl, (*z).c2rust_unnamed_1.c2rust_unnamed.e);
         }
         116 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_2.hl, (*z).c2rust_unnamed_2.c2rust_unnamed.h);
         }
         117 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_2.hl, (*z).c2rust_unnamed_2.c2rust_unnamed.l);
         }
         62 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed.c2rust_unnamed.a = nextb(z);
         }
         6 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_0.c2rust_unnamed.b = nextb(z);
         }
         14 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_0.c2rust_unnamed.c = nextb(z);
         }
         22 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_1.c2rust_unnamed.d = nextb(z);
         }
         30 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_1.c2rust_unnamed.e = nextb(z);
         }
         38 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_2.c2rust_unnamed.h = nextb(z);
         }
         46 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed_2.c2rust_unnamed.l = nextb(z);
         }
         54 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             wb(z, (*z).c2rust_unnamed_2.hl, nextb(z));
         }
         10 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed.c2rust_unnamed.a = rb(z, (*z).c2rust_unnamed_0.bc);
             (*z)
                 .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 + 1 as i32)
                 as uint16_t;
         }
         26 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z).c2rust_unnamed.c2rust_unnamed.a = rb(z, (*z).c2rust_unnamed_1.de);
             (*z)
                 .mem_ptr = ((*z).c2rust_unnamed_1.de as i32 + 1 as i32)
                 as uint16_t;
         }
         58 => {
-            cyc = cyc.wrapping_add(13 as i32 as u32);
+            cyc = cyc.wrapping_add(13);
             let addr: uint16_t = nextw(z);
             (*z).c2rust_unnamed.c2rust_unnamed.a = rb(z, addr);
             (*z).mem_ptr = (addr as i32 + 1 as i32) as uint16_t;
         }
         2 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_0.bc, (*z).c2rust_unnamed.c2rust_unnamed.a);
             (*z)
                 .mem_ptr = (((*z).c2rust_unnamed.c2rust_unnamed.a as i32)
@@ -1621,7 +1621,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
                     & 0xff as i32) as uint16_t;
         }
         18 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             wb(z, (*z).c2rust_unnamed_1.de, (*z).c2rust_unnamed.c2rust_unnamed.a);
             (*z)
                 .mem_ptr = (((*z).c2rust_unnamed.c2rust_unnamed.a as i32)
@@ -1630,7 +1630,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
                     & 0xff as i32) as uint16_t;
         }
         50 => {
-            cyc = cyc.wrapping_add(13 as i32 as u32);
+            cyc = cyc.wrapping_add(13);
             let addr_0: uint16_t = nextw(z);
             wb(z, addr_0, (*z).c2rust_unnamed.c2rust_unnamed.a);
             (*z)
@@ -1640,52 +1640,52 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
                 as uint16_t;
         }
         1 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).c2rust_unnamed_0.bc = nextw(z);
         }
         17 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).c2rust_unnamed_1.de = nextw(z);
         }
         33 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).c2rust_unnamed_2.hl = nextw(z);
         }
         49 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).sp = nextw(z);
         }
         42 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             let addr_1: uint16_t = nextw(z);
             (*z).c2rust_unnamed_2.hl = rw(z, addr_1);
             (*z).mem_ptr = (addr_1 as i32 + 1 as i32) as uint16_t;
         }
         34 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             let addr_2: uint16_t = nextw(z);
             ww(z, addr_2, (*z).c2rust_unnamed_2.hl);
             (*z).mem_ptr = (addr_2 as i32 + 1 as i32) as uint16_t;
         }
         249 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).sp = (*z).c2rust_unnamed_2.hl;
         }
         235 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             let de: uint16_t = (*z).c2rust_unnamed_1.de;
             (*z).c2rust_unnamed_1.de = (*z).c2rust_unnamed_2.hl;
             (*z).c2rust_unnamed_2.hl = de;
         }
         227 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             let val: uint16_t = rw(z, (*z).sp);
             ww(z, (*z).sp, (*z).c2rust_unnamed_2.hl);
             (*z).c2rust_unnamed_2.hl = val;
             (*z).mem_ptr = val;
         }
         135 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1697,7 +1697,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         128 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1709,7 +1709,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         129 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1721,7 +1721,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         130 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1733,7 +1733,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         131 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1745,7 +1745,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         132 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1757,7 +1757,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         133 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1769,7 +1769,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         134 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1781,7 +1781,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         198 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1793,7 +1793,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         143 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1805,7 +1805,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         136 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1817,7 +1817,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         137 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1829,7 +1829,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         138 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1841,7 +1841,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         139 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1853,7 +1853,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         140 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1865,7 +1865,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         141 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1877,7 +1877,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         142 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1889,7 +1889,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         206 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1901,7 +1901,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         151 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1913,7 +1913,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         144 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1925,7 +1925,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         145 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1937,7 +1937,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         146 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1949,7 +1949,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         147 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1961,7 +1961,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         148 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1973,7 +1973,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         149 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1985,7 +1985,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         150 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -1997,7 +1997,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         214 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2009,7 +2009,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         159 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2021,7 +2021,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         152 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2033,7 +2033,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         153 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2045,7 +2045,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         154 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2057,7 +2057,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         155 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2069,7 +2069,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         156 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2081,7 +2081,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         157 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2093,7 +2093,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         158 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2105,7 +2105,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         222 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2117,183 +2117,183 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         9 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             addhl(z, (*z).c2rust_unnamed_0.bc);
         }
         25 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             addhl(z, (*z).c2rust_unnamed_1.de);
         }
         41 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             addhl(z, (*z).c2rust_unnamed_2.hl);
         }
         57 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             addhl(z, (*z).sp);
         }
         243 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z).iff2 = 0 as i32 != 0;
             (*z).iff1 = (*z).iff2;
         }
         251 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z).iff_delay = 1 as i32 as uint8_t;
         }
         0 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
         }
         118 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z).halted = 1 as i32 != 0;
         }
         60 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = inc(z, (*z).c2rust_unnamed.c2rust_unnamed.a);
         }
         4 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = inc(z, (*z).c2rust_unnamed_0.c2rust_unnamed.b);
         }
         12 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = inc(z, (*z).c2rust_unnamed_0.c2rust_unnamed.c);
         }
         20 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = inc(z, (*z).c2rust_unnamed_1.c2rust_unnamed.d);
         }
         28 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = inc(z, (*z).c2rust_unnamed_1.c2rust_unnamed.e);
         }
         36 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = inc(z, (*z).c2rust_unnamed_2.c2rust_unnamed.h);
         }
         44 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = inc(z, (*z).c2rust_unnamed_2.c2rust_unnamed.l);
         }
         52 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             let mut result: uint8_t = inc(z, rb(z, (*z).c2rust_unnamed_2.hl));
             wb(z, (*z).c2rust_unnamed_2.hl, result);
         }
         61 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = dec(z, (*z).c2rust_unnamed.c2rust_unnamed.a);
         }
         5 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = dec(z, (*z).c2rust_unnamed_0.c2rust_unnamed.b);
         }
         13 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = dec(z, (*z).c2rust_unnamed_0.c2rust_unnamed.c);
         }
         21 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = dec(z, (*z).c2rust_unnamed_1.c2rust_unnamed.d);
         }
         29 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = dec(z, (*z).c2rust_unnamed_1.c2rust_unnamed.e);
         }
         37 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = dec(z, (*z).c2rust_unnamed_2.c2rust_unnamed.h);
         }
         45 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = dec(z, (*z).c2rust_unnamed_2.c2rust_unnamed.l);
         }
         53 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             let mut result_0: uint8_t = dec(z, rb(z, (*z).c2rust_unnamed_2.hl));
             wb(z, (*z).c2rust_unnamed_2.hl, result_0);
         }
         3 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).c2rust_unnamed_0.bc = ((*z).c2rust_unnamed_0.bc).wrapping_add(1);
         }
         19 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).c2rust_unnamed_1.de = ((*z).c2rust_unnamed_1.de).wrapping_add(1);
         }
         35 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).c2rust_unnamed_2.hl = ((*z).c2rust_unnamed_2.hl).wrapping_add(1);
         }
         51 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).sp = ((*z).sp).wrapping_add(1);
         }
         11 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).c2rust_unnamed_0.bc = ((*z).c2rust_unnamed_0.bc).wrapping_sub(1);
         }
         27 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).c2rust_unnamed_1.de = ((*z).c2rust_unnamed_1.de).wrapping_sub(1);
         }
         43 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).c2rust_unnamed_2.hl = ((*z).c2rust_unnamed_2.hl).wrapping_sub(1);
         }
         59 => {
-            cyc = cyc.wrapping_add(6 as i32 as u32);
+            cyc = cyc.wrapping_add(6);
             (*z).sp = ((*z).sp).wrapping_sub(1);
         }
         39 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             daa(z);
         }
         47 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2314,7 +2314,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         55 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             flag_set(z, cf, 1 as i32 != 0);
             flag_set(z, nf, 0 as i32 != 0);
             flag_set(z, hf, 0 as i32 != 0);
@@ -2332,7 +2332,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         63 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             flag_set(z, hf, flag_get(z, cf));
             flag_set(z, cf, !flag_get(z, cf));
             flag_set(z, nf, 0 as i32 != 0);
@@ -2350,7 +2350,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         7 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             flag_set(
                 z,
                 cf,
@@ -2378,7 +2378,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         15 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             flag_set(
                 z,
                 cf,
@@ -2407,7 +2407,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         23 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             let cy: bool = flag_get(z, cf);
             flag_set(
                 z,
@@ -2436,7 +2436,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         31 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             let cy_0: bool = flag_get(z, cf);
             flag_set(
                 z,
@@ -2466,187 +2466,187 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         167 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             land(z, (*z).c2rust_unnamed.c2rust_unnamed.a);
         }
         160 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             land(z, (*z).c2rust_unnamed_0.c2rust_unnamed.b);
         }
         161 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             land(z, (*z).c2rust_unnamed_0.c2rust_unnamed.c);
         }
         162 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             land(z, (*z).c2rust_unnamed_1.c2rust_unnamed.d);
         }
         163 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             land(z, (*z).c2rust_unnamed_1.c2rust_unnamed.e);
         }
         164 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             land(z, (*z).c2rust_unnamed_2.c2rust_unnamed.h);
         }
         165 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             land(z, (*z).c2rust_unnamed_2.c2rust_unnamed.l);
         }
         166 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             land(z, rb(z, (*z).c2rust_unnamed_2.hl));
         }
         230 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             land(z, nextb(z));
         }
         175 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lxor(z, (*z).c2rust_unnamed.c2rust_unnamed.a);
         }
         168 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lxor(z, (*z).c2rust_unnamed_0.c2rust_unnamed.b);
         }
         169 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lxor(z, (*z).c2rust_unnamed_0.c2rust_unnamed.c);
         }
         170 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lxor(z, (*z).c2rust_unnamed_1.c2rust_unnamed.d);
         }
         171 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lxor(z, (*z).c2rust_unnamed_1.c2rust_unnamed.e);
         }
         172 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lxor(z, (*z).c2rust_unnamed_2.c2rust_unnamed.h);
         }
         173 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lxor(z, (*z).c2rust_unnamed_2.c2rust_unnamed.l);
         }
         174 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             lxor(z, rb(z, (*z).c2rust_unnamed_2.hl));
         }
         238 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             lxor(z, nextb(z));
         }
         183 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lor(z, (*z).c2rust_unnamed.c2rust_unnamed.a);
         }
         176 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lor(z, (*z).c2rust_unnamed_0.c2rust_unnamed.b);
         }
         177 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lor(z, (*z).c2rust_unnamed_0.c2rust_unnamed.c);
         }
         178 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lor(z, (*z).c2rust_unnamed_1.c2rust_unnamed.d);
         }
         179 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lor(z, (*z).c2rust_unnamed_1.c2rust_unnamed.e);
         }
         180 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lor(z, (*z).c2rust_unnamed_2.c2rust_unnamed.h);
         }
         181 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             lor(z, (*z).c2rust_unnamed_2.c2rust_unnamed.l);
         }
         182 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             lor(z, rb(z, (*z).c2rust_unnamed_2.hl));
         }
         246 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             lor(z, nextb(z));
         }
         191 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             cp(z, (*z).c2rust_unnamed.c2rust_unnamed.a as uint32_t);
         }
         184 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             cp(z, (*z).c2rust_unnamed_0.c2rust_unnamed.b as uint32_t);
         }
         185 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             cp(z, (*z).c2rust_unnamed_0.c2rust_unnamed.c as uint32_t);
         }
         186 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             cp(z, (*z).c2rust_unnamed_1.c2rust_unnamed.d as uint32_t);
         }
         187 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             cp(z, (*z).c2rust_unnamed_1.c2rust_unnamed.e as uint32_t);
         }
         188 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             cp(z, (*z).c2rust_unnamed_2.c2rust_unnamed.h as uint32_t);
         }
         189 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             cp(z, (*z).c2rust_unnamed_2.c2rust_unnamed.l as uint32_t);
         }
         190 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             cp(z, rb(z, (*z).c2rust_unnamed_2.hl) as uint32_t);
         }
         254 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             cp(z, nextb(z) as uint32_t);
         }
         195 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             jump(z, nextw(z));
         }
         194 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cond_jump(z, flag_get(z, zf) as i32 == 0 as i32);
         }
         202 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cond_jump(z, flag_get(z, zf) as i32 == 1 as i32);
         }
         210 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cond_jump(z, flag_get(z, cf) as i32 == 0 as i32);
         }
         218 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cond_jump(z, flag_get(z, cf) as i32 == 1 as i32);
         }
         226 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cond_jump(z, flag_get(z, pf) as i32 == 0 as i32);
         }
         234 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cond_jump(z, flag_get(z, pf) as i32 == 1 as i32);
         }
         242 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cond_jump(z, flag_get(z, sf) as i32 == 0 as i32);
         }
         250 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cond_jump(z, flag_get(z, sf) as i32 == 1 as i32);
         }
         16 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
@@ -2661,227 +2661,227 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
                 );
         }
         24 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             jr(z, nextb(z) as int8_t);
         }
         32 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             cyc = cyc
                 .wrapping_add(
                     cond_jr(z, flag_get(z, zf) as i32 == 0 as i32),
                 );
         }
         40 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             cyc = cyc
                 .wrapping_add(
                     cond_jr(z, flag_get(z, zf) as i32 == 1 as i32),
                 );
         }
         48 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             cyc = cyc
                 .wrapping_add(
                     cond_jr(z, flag_get(z, cf) as i32 == 0 as i32),
                 );
         }
         56 => {
-            cyc = cyc.wrapping_add(7 as i32 as u32);
+            cyc = cyc.wrapping_add(7);
             cyc = cyc
                 .wrapping_add(
                     cond_jr(z, flag_get(z, cf) as i32 == 1 as i32),
                 );
         }
         233 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             (*z).pc = (*z).c2rust_unnamed_2.hl;
         }
         205 => {
-            cyc = cyc.wrapping_add(17 as i32 as u32);
+            cyc = cyc.wrapping_add(17);
             call(z, nextw(z));
         }
         196 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cyc = cyc
                 .wrapping_add(
                     cond_call(z, flag_get(z, zf) as i32 == 0 as i32),
                 );
         }
         204 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cyc = cyc
                 .wrapping_add(
                     cond_call(z, flag_get(z, zf) as i32 == 1 as i32),
                 );
         }
         212 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cyc = cyc
                 .wrapping_add(
                     cond_call(z, flag_get(z, cf) as i32 == 0 as i32),
                 );
         }
         220 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cyc = cyc
                 .wrapping_add(
                     cond_call(z, flag_get(z, cf) as i32 == 1 as i32),
                 );
         }
         228 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cyc = cyc
                 .wrapping_add(
                     cond_call(z, flag_get(z, pf) as i32 == 0 as i32),
                 );
         }
         236 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cyc = cyc
                 .wrapping_add(
                     cond_call(z, flag_get(z, pf) as i32 == 1 as i32),
                 );
         }
         244 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cyc = cyc
                 .wrapping_add(
                     cond_call(z, flag_get(z, sf) as i32 == 0 as i32),
                 );
         }
         252 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             cyc = cyc
                 .wrapping_add(
                     cond_call(z, flag_get(z, sf) as i32 == 1 as i32),
                 );
         }
         201 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             ret(z);
         }
         192 => {
-            cyc = cyc.wrapping_add(5 as i32 as u32);
+            cyc = cyc.wrapping_add(5);
             cyc = cyc
                 .wrapping_add(
                     cond_ret(z, flag_get(z, zf) as i32 == 0 as i32),
                 );
         }
         200 => {
-            cyc = cyc.wrapping_add(5 as i32 as u32);
+            cyc = cyc.wrapping_add(5);
             cyc = cyc
                 .wrapping_add(
                     cond_ret(z, flag_get(z, zf) as i32 == 1 as i32),
                 );
         }
         208 => {
-            cyc = cyc.wrapping_add(5 as i32 as u32);
+            cyc = cyc.wrapping_add(5);
             cyc = cyc
                 .wrapping_add(
                     cond_ret(z, flag_get(z, cf) as i32 == 0 as i32),
                 );
         }
         216 => {
-            cyc = cyc.wrapping_add(5 as i32 as u32);
+            cyc = cyc.wrapping_add(5);
             cyc = cyc
                 .wrapping_add(
                     cond_ret(z, flag_get(z, cf) as i32 == 1 as i32),
                 );
         }
         224 => {
-            cyc = cyc.wrapping_add(5 as i32 as u32);
+            cyc = cyc.wrapping_add(5);
             cyc = cyc
                 .wrapping_add(
                     cond_ret(z, flag_get(z, pf) as i32 == 0 as i32),
                 );
         }
         232 => {
-            cyc = cyc.wrapping_add(5 as i32 as u32);
+            cyc = cyc.wrapping_add(5);
             cyc = cyc
                 .wrapping_add(
                     cond_ret(z, flag_get(z, pf) as i32 == 1 as i32),
                 );
         }
         240 => {
-            cyc = cyc.wrapping_add(5 as i32 as u32);
+            cyc = cyc.wrapping_add(5);
             cyc = cyc
                 .wrapping_add(
                     cond_ret(z, flag_get(z, sf) as i32 == 0 as i32),
                 );
         }
         248 => {
-            cyc = cyc.wrapping_add(5 as i32 as u32);
+            cyc = cyc.wrapping_add(5);
             cyc = cyc
                 .wrapping_add(
                     cond_ret(z, flag_get(z, sf) as i32 == 1 as i32),
                 );
         }
         199 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             call(z, 0 as i32 as uint16_t);
         }
         207 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             call(z, 0x8 as i32 as uint16_t);
         }
         215 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             call(z, 0x10 as i32 as uint16_t);
         }
         223 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             call(z, 0x18 as i32 as uint16_t);
         }
         231 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             call(z, 0x20 as i32 as uint16_t);
         }
         239 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             call(z, 0x28 as i32 as uint16_t);
         }
         247 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             call(z, 0x30 as i32 as uint16_t);
         }
         255 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             call(z, 0x38 as i32 as uint16_t);
         }
         197 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             pushw(z, (*z).c2rust_unnamed_0.bc);
         }
         213 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             pushw(z, (*z).c2rust_unnamed_1.de);
         }
         229 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             pushw(z, (*z).c2rust_unnamed_2.hl);
         }
         245 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             pushw(z, (*z).c2rust_unnamed.af);
         }
         193 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).c2rust_unnamed_0.bc = popw(z);
         }
         209 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).c2rust_unnamed_1.de = popw(z);
         }
         225 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).c2rust_unnamed_2.hl = popw(z);
         }
         241 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).c2rust_unnamed.af = popw(z);
         }
         219 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             let port: uint16_t = (nextb(z) as i32
                 | ((*z).c2rust_unnamed.c2rust_unnamed.a as i32)
                     << 8 as i32) as uint16_t;
@@ -2892,7 +2892,7 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             (*z).mem_ptr = (port as i32 + 1 as i32) as uint16_t;
         }
         211 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             let port_0: uint16_t = (nextb(z) as i32
                 | ((*z).c2rust_unnamed.c2rust_unnamed.a as i32)
                     << 8 as i32) as uint16_t;
@@ -2904,13 +2904,13 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
                     << 8 as i32) as uint16_t;
         }
         8 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             let mut af: uint16_t = (*z).c2rust_unnamed.af;
             (*z).c2rust_unnamed.af = (*z).c2rust_unnamed_3.a_f_;
             (*z).c2rust_unnamed_3.a_f_ = af;
         }
         217 => {
-            cyc = cyc.wrapping_add(4 as i32 as u32);
+            cyc = cyc.wrapping_add(4);
             let mut bc: uint16_t = (*z).c2rust_unnamed_0.bc;
             let mut de_0: uint16_t = (*z).c2rust_unnamed_1.de;
             let mut hl: uint16_t = (*z).c2rust_unnamed_2.hl;
@@ -2922,19 +2922,19 @@ unsafe fn exec_opcode(z: *mut z80, mut opcode: uint8_t) -> u32 {
             (*z).c2rust_unnamed_6.h_l_ = hl;
         }
         203 => {
-            cyc = cyc.wrapping_add(0 as i32 as u32);
+            cyc = cyc.wrapping_add(0);
             cyc = cyc.wrapping_add(exec_opcode_cb(z, nextb(z)));
         }
         237 => {
-            cyc = cyc.wrapping_add(0 as i32 as u32);
+            cyc = cyc.wrapping_add(0);
             cyc = cyc.wrapping_add(exec_opcode_ed(z, nextb(z)));
         }
         221 => {
-            cyc = cyc.wrapping_add(0 as i32 as u32);
+            cyc = cyc.wrapping_add(0);
             cyc = cyc.wrapping_add(exec_opcode_ddfd(z, nextb(z), &mut (*z).ix));
         }
         253 => {
-            cyc = cyc.wrapping_add(0 as i32 as u32);
+            cyc = cyc.wrapping_add(0);
             cyc = cyc.wrapping_add(exec_opcode_ddfd(z, nextb(z), &mut (*z).iy));
         }
         _ => {}
@@ -2946,39 +2946,39 @@ unsafe fn exec_opcode_ddfd(
     mut opcode: uint8_t,
     iz: *mut uint16_t,
 ) -> u32 {
-    let mut cyc: u32 = 0 as i32 as u32;
+    let mut cyc: u32 = 0;
     inc_r(z);
     match opcode as i32 {
         225 => {
-            cyc = cyc.wrapping_add(14 as i32 as u32);
+            cyc = cyc.wrapping_add(14);
             *iz = popw(z);
         }
         229 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             pushw(z, *iz);
         }
         233 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             jump(z, *iz);
         }
         9 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             addiz(z, iz, (*z).c2rust_unnamed_0.bc);
         }
         25 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             addiz(z, iz, (*z).c2rust_unnamed_1.de);
         }
         41 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             addiz(z, iz, *iz);
         }
         57 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             addiz(z, iz, (*z).sp);
         }
         132 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -2990,7 +2990,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         133 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3002,7 +3002,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         140 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3014,7 +3014,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         141 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3026,7 +3026,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         134 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3038,7 +3038,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         142 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3050,7 +3050,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         150 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3062,7 +3062,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         158 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3074,7 +3074,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         148 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3086,7 +3086,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         149 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3098,7 +3098,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         156 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3110,7 +3110,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         157 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -3122,114 +3122,114 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         166 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             land(z, rb(z, displace(z, *iz, nextb(z) as int8_t)));
         }
         164 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             land(z, (*iz as i32 >> 8 as i32) as uint8_t);
         }
         165 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             land(z, (*iz as i32 & 0xff as i32) as uint8_t);
         }
         174 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             lxor(z, rb(z, displace(z, *iz, nextb(z) as int8_t)));
         }
         172 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             lxor(z, (*iz as i32 >> 8 as i32) as uint8_t);
         }
         173 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             lxor(z, (*iz as i32 & 0xff as i32) as uint8_t);
         }
         182 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             lor(z, rb(z, displace(z, *iz, nextb(z) as int8_t)));
         }
         180 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             lor(z, (*iz as i32 >> 8 as i32) as uint8_t);
         }
         181 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             lor(z, (*iz as i32 & 0xff as i32) as uint8_t);
         }
         190 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             cp(z, rb(z, displace(z, *iz, nextb(z) as int8_t)) as uint32_t);
         }
         188 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             cp(z, (*iz as i32 >> 8 as i32) as uint32_t);
         }
         189 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             cp(z, (*iz as i32 & 0xff as i32) as uint32_t);
         }
         35 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             *iz = (*iz as i32 + 1 as i32) as uint16_t;
         }
         43 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             *iz = (*iz as i32 - 1 as i32) as uint16_t;
         }
         52 => {
-            cyc = cyc.wrapping_add(23 as i32 as u32);
+            cyc = cyc.wrapping_add(23);
             let mut addr: uint16_t = displace(z, *iz, nextb(z) as int8_t);
             wb(z, addr, inc(z, rb(z, addr)));
         }
         53 => {
-            cyc = cyc.wrapping_add(23 as i32 as u32);
+            cyc = cyc.wrapping_add(23);
             let mut addr_0: uint16_t = displace(z, *iz, nextb(z) as int8_t);
             wb(z, addr_0, dec(z, rb(z, addr_0)));
         }
         36 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = (*iz as i32 & 0xff as i32
                 | (inc(z, (*iz as i32 >> 8 as i32) as uint8_t)
                     as i32) << 8 as i32) as uint16_t;
         }
         37 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = (*iz as i32 & 0xff as i32
                 | (dec(z, (*iz as i32 >> 8 as i32) as uint8_t)
                     as i32) << 8 as i32) as uint16_t;
         }
         44 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | inc(z, (*iz as i32 & 0xff as i32) as uint8_t)
                     as i32) as uint16_t;
         }
         45 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | dec(z, (*iz as i32 & 0xff as i32) as uint8_t)
                     as i32) as uint16_t;
         }
         42 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             *iz = rw(z, nextw(z));
         }
         34 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             ww(z, nextw(z), *iz);
         }
         33 => {
-            cyc = cyc.wrapping_add(14 as i32 as u32);
+            cyc = cyc.wrapping_add(14);
             *iz = nextw(z);
         }
         54 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             let mut addr_1: uint16_t = displace(z, *iz, nextb(z) as int8_t);
             wb(z, addr_1, nextb(z));
         }
         112 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             wb(
                 z,
                 displace(z, *iz, nextb(z) as int8_t),
@@ -3237,7 +3237,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         113 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             wb(
                 z,
                 displace(z, *iz, nextb(z) as int8_t),
@@ -3245,7 +3245,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         114 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             wb(
                 z,
                 displace(z, *iz, nextb(z) as int8_t),
@@ -3253,7 +3253,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         115 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             wb(
                 z,
                 displace(z, *iz, nextb(z) as int8_t),
@@ -3261,7 +3261,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         116 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             wb(
                 z,
                 displace(z, *iz, nextb(z) as int8_t),
@@ -3269,7 +3269,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         117 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             wb(
                 z,
                 displace(z, *iz, nextb(z) as int8_t),
@@ -3277,7 +3277,7 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         119 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             wb(
                 z,
                 displace(z, *iz, nextb(z) as int8_t),
@@ -3285,211 +3285,211 @@ unsafe fn exec_opcode_ddfd(
             );
         }
         70 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = rb(z, displace(z, *iz, nextb(z) as int8_t));
         }
         78 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = rb(z, displace(z, *iz, nextb(z) as int8_t));
         }
         86 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = rb(z, displace(z, *iz, nextb(z) as int8_t));
         }
         94 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = rb(z, displace(z, *iz, nextb(z) as int8_t));
         }
         102 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .h = rb(z, displace(z, *iz, nextb(z) as int8_t));
         }
         110 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed_2
                 .c2rust_unnamed
                 .l = rb(z, displace(z, *iz, nextb(z) as int8_t));
         }
         126 => {
-            cyc = cyc.wrapping_add(19 as i32 as u32);
+            cyc = cyc.wrapping_add(19);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = rb(z, displace(z, *iz, nextb(z) as int8_t));
         }
         68 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*iz as i32 >> 8 as i32) as uint8_t;
         }
         76 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*iz as i32 >> 8 as i32) as uint8_t;
         }
         84 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*iz as i32 >> 8 as i32) as uint8_t;
         }
         92 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*iz as i32 >> 8 as i32) as uint8_t;
         }
         124 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = (*iz as i32 >> 8 as i32) as uint8_t;
         }
         69 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .b = (*iz as i32 & 0xff as i32) as uint8_t;
         }
         77 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_0
                 .c2rust_unnamed
                 .c = (*iz as i32 & 0xff as i32) as uint8_t;
         }
         85 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .d = (*iz as i32 & 0xff as i32) as uint8_t;
         }
         93 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed_1
                 .c2rust_unnamed
                 .e = (*iz as i32 & 0xff as i32) as uint8_t;
         }
         125 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
                 .a = (*iz as i32 & 0xff as i32) as uint8_t;
         }
         96 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = (*iz as i32 & 0xff as i32
                 | ((*z).c2rust_unnamed_0.c2rust_unnamed.b as i32)
                     << 8 as i32) as uint16_t;
         }
         97 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = (*iz as i32 & 0xff as i32
                 | ((*z).c2rust_unnamed_0.c2rust_unnamed.c as i32)
                     << 8 as i32) as uint16_t;
         }
         98 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = (*iz as i32 & 0xff as i32
                 | ((*z).c2rust_unnamed_1.c2rust_unnamed.d as i32)
                     << 8 as i32) as uint16_t;
         }
         99 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = (*iz as i32 & 0xff as i32
                 | ((*z).c2rust_unnamed_1.c2rust_unnamed.e as i32)
                     << 8 as i32) as uint16_t;
         }
         100 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
         }
         101 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 & 0xff as i32) << 8 as i32
                 | *iz as i32 & 0xff as i32) as uint16_t;
         }
         103 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = (*iz as i32 & 0xff as i32
                 | ((*z).c2rust_unnamed.c2rust_unnamed.a as i32)
                     << 8 as i32) as uint16_t;
         }
         38 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             *iz = (*iz as i32 & 0xff as i32
                 | (nextb(z) as i32) << 8 as i32) as uint16_t;
         }
         104 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | (*z).c2rust_unnamed_0.c2rust_unnamed.b as i32) as uint16_t;
         }
         105 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | (*z).c2rust_unnamed_0.c2rust_unnamed.c as i32) as uint16_t;
         }
         106 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | (*z).c2rust_unnamed_1.c2rust_unnamed.d as i32) as uint16_t;
         }
         107 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | (*z).c2rust_unnamed_1.c2rust_unnamed.e as i32) as uint16_t;
         }
         108 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | *iz as i32 >> 8 as i32) as uint16_t;
         }
         109 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
         }
         111 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | (*z).c2rust_unnamed.c2rust_unnamed.a as i32) as uint16_t;
         }
         46 => {
-            cyc = cyc.wrapping_add(11 as i32 as u32);
+            cyc = cyc.wrapping_add(11);
             *iz = ((*iz as i32 >> 8 as i32) << 8 as i32
                 | nextb(z) as i32) as uint16_t;
         }
         249 => {
-            cyc = cyc.wrapping_add(10 as i32 as u32);
+            cyc = cyc.wrapping_add(10);
             (*z).sp = *iz;
         }
         227 => {
-            cyc = cyc.wrapping_add(23 as i32 as u32);
+            cyc = cyc.wrapping_add(23);
             let val: uint16_t = rw(z, (*z).sp);
             ww(z, (*z).sp, *iz);
             *iz = val;
@@ -3503,7 +3503,7 @@ unsafe fn exec_opcode_ddfd(
         _ => {
             cyc = cyc
                 .wrapping_add(
-                    (4 as i32 as u32)
+                    (4_u32)
                         .wrapping_add(exec_opcode(z, opcode)),
                 );
             (*z)
@@ -3515,7 +3515,7 @@ unsafe fn exec_opcode_ddfd(
     return cyc;
 }
 unsafe fn exec_opcode_cb(z: *mut z80, mut opcode: uint8_t) -> u32 {
-    let mut cyc: u32 = 8 as i32 as u32;
+    let mut cyc: u32 = 8;
     inc_r(z);
     let mut x_: uint8_t = (opcode as i32 >> 6 as i32 & 3 as i32)
         as uint8_t;
@@ -3597,7 +3597,7 @@ unsafe fn exec_opcode_cb(z: *mut z80, mut opcode: uint8_t) -> u32 {
                     (*z).mem_ptr as i32 >> 8 as i32 >> 3 as i32
                         & 1 as i32 != 0,
                 );
-                cyc = cyc.wrapping_add(4 as i32 as u32);
+                cyc = cyc.wrapping_add(4);
             } else {
                 flag_set(
                     z,
@@ -3623,7 +3623,7 @@ unsafe fn exec_opcode_cb(z: *mut z80, mut opcode: uint8_t) -> u32 {
     }
     if x_ as i32 != 1 as i32 && z_ as i32 == 6 as i32 {
         wb(z, (*z).c2rust_unnamed_2.hl, hl);
-        cyc = cyc.wrapping_add(7 as i32 as u32);
+        cyc = cyc.wrapping_add(7);
     }
     return cyc;
 }
@@ -3632,7 +3632,7 @@ unsafe fn exec_opcode_dcb(
     mut opcode: uint8_t,
     mut addr: uint16_t,
 ) -> u32 {
-    let mut cyc: u32 = 0 as i32 as u32;
+    let mut cyc: u32 = 0;
     let mut val: uint8_t = rb(z, addr);
     let mut result: uint8_t = 0 as i32 as uint8_t;
     let mut x_: uint8_t = (opcode as i32 >> 6 as i32 & 3 as i32)
@@ -3725,27 +3725,27 @@ unsafe fn exec_opcode_dcb(
         }
     }
     if x_ as i32 == 1 as i32 {
-        cyc = cyc.wrapping_add(20 as i32 as u32);
+        cyc = cyc.wrapping_add(20);
     } else {
         wb(z, addr, result);
-        cyc = cyc.wrapping_add(23 as i32 as u32);
+        cyc = cyc.wrapping_add(23);
     }
     return cyc;
 }
 unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
-    let mut cyc: u32 = 0 as i32 as u32;
+    let mut cyc: u32 = 0;
     inc_r(z);
     match opcode as i32 {
         71 => {
-            cyc = cyc.wrapping_add(9 as i32 as u32);
+            cyc = cyc.wrapping_add(9);
             (*z).i = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         79 => {
-            cyc = cyc.wrapping_add(9 as i32 as u32);
+            cyc = cyc.wrapping_add(9);
             (*z).r = (*z).c2rust_unnamed.c2rust_unnamed.a;
         }
         87 => {
-            cyc = cyc.wrapping_add(9 as i32 as u32);
+            cyc = cyc.wrapping_add(9);
             (*z).c2rust_unnamed.c2rust_unnamed.a = (*z).i;
             flag_set(
                 z,
@@ -3763,7 +3763,7 @@ unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
             flag_set(z, pf, (*z).iff2);
         }
         95 => {
-            cyc = cyc.wrapping_add(9 as i32 as u32);
+            cyc = cyc.wrapping_add(9);
             (*z).c2rust_unnamed.c2rust_unnamed.a = (*z).r;
             flag_set(
                 z,
@@ -3781,56 +3781,56 @@ unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
             flag_set(z, pf, (*z).iff2);
         }
         69 | 85 | 93 | 101 | 109 | 117 | 125 => {
-            cyc = cyc.wrapping_add(14 as i32 as u32);
+            cyc = cyc.wrapping_add(14);
             (*z).iff1 = (*z).iff2;
             ret(z);
         }
         77 => {
-            cyc = cyc.wrapping_add(14 as i32 as u32);
+            cyc = cyc.wrapping_add(14);
             ret(z);
         }
         160 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             ldi(z);
         }
         176 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             ldi(z);
             if (*z).c2rust_unnamed_0.bc as i32 != 0 as i32 {
                 (*z).pc = ((*z).pc as i32 - 2 as i32) as uint16_t;
-                cyc = cyc.wrapping_add(5 as i32 as u32);
+                cyc = cyc.wrapping_add(5);
                 (*z).mem_ptr = ((*z).pc as i32 + 1 as i32) as uint16_t;
             }
         }
         168 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             ldd(z);
         }
         184 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             ldd(z);
             if (*z).c2rust_unnamed_0.bc as i32 != 0 as i32 {
                 (*z).pc = ((*z).pc as i32 - 2 as i32) as uint16_t;
-                cyc = cyc.wrapping_add(5 as i32 as u32);
+                cyc = cyc.wrapping_add(5);
                 (*z).mem_ptr = ((*z).pc as i32 + 1 as i32) as uint16_t;
             }
         }
         161 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             cpi(z);
         }
         169 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             cpd(z);
         }
         177 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             cpi(z);
             if (*z).c2rust_unnamed_0.bc as i32 != 0 as i32
                 && !flag_get(z, zf)
             {
                 (*z).pc = ((*z).pc as i32 - 2 as i32) as uint16_t;
-                cyc = cyc.wrapping_add(5 as i32 as u32);
+                cyc = cyc.wrapping_add(5);
                 (*z).mem_ptr = ((*z).pc as i32 + 1 as i32) as uint16_t;
             } else {
                 (*z)
@@ -3839,13 +3839,13 @@ unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
             }
         }
         185 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             cpd(z);
             if (*z).c2rust_unnamed_0.bc as i32 != 0 as i32
                 && !flag_get(z, zf)
             {
                 (*z).pc = ((*z).pc as i32 - 2 as i32) as uint16_t;
-                cyc = cyc.wrapping_add(5 as i32 as u32);
+                cyc = cyc.wrapping_add(5);
             } else {
                 (*z)
                     .mem_ptr = ((*z).mem_ptr as i32 + 1 as i32)
@@ -3853,207 +3853,207 @@ unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
             }
         }
         64 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             in_r_c(z, &mut (*z).c2rust_unnamed_0.c2rust_unnamed.b);
         }
         72 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             in_r_c(z, &mut (*z).c2rust_unnamed_0.c2rust_unnamed.c);
         }
         80 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             in_r_c(z, &mut (*z).c2rust_unnamed_1.c2rust_unnamed.d);
         }
         88 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             in_r_c(z, &mut (*z).c2rust_unnamed_1.c2rust_unnamed.e);
         }
         96 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             in_r_c(z, &mut (*z).c2rust_unnamed_2.c2rust_unnamed.h);
         }
         104 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             in_r_c(z, &mut (*z).c2rust_unnamed_2.c2rust_unnamed.l);
         }
         112 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             let mut val: uint8_t = 0;
             in_r_c(z, &mut val);
         }
         120 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             in_r_c(z, &mut (*z).c2rust_unnamed.c2rust_unnamed.a);
             (*z)
                 .mem_ptr = ((*z).c2rust_unnamed_0.bc as i32 + 1 as i32)
                 as uint16_t;
         }
         162 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             ini(z);
         }
         178 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             ini(z);
             if (*z).c2rust_unnamed_0.c2rust_unnamed.b as i32 > 0 as i32 {
                 (*z).pc = ((*z).pc as i32 - 2 as i32) as uint16_t;
-                cyc = cyc.wrapping_add(5 as i32 as u32);
+                cyc = cyc.wrapping_add(5);
                 (*z).mem_ptr = ((*z).pc as i32 + 1 as i32) as uint16_t;
             }
         }
         170 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             ind(z);
         }
         186 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             ind(z);
             if (*z).c2rust_unnamed_0.c2rust_unnamed.b as i32 > 0 as i32 {
                 (*z).pc = ((*z).pc as i32 - 2 as i32) as uint16_t;
-                cyc = cyc.wrapping_add(5 as i32 as u32);
+                cyc = cyc.wrapping_add(5);
                 (*z).mem_ptr = ((*z).pc as i32 + 1 as i32) as uint16_t;
             }
         }
         121 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             outc(z, (*z).c2rust_unnamed.c2rust_unnamed.a);
         }
         65 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             outc(z, (*z).c2rust_unnamed_0.c2rust_unnamed.b);
         }
         73 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             outc(z, (*z).c2rust_unnamed_0.c2rust_unnamed.c);
         }
         81 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             outc(z, (*z).c2rust_unnamed_1.c2rust_unnamed.d);
         }
         89 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             outc(z, (*z).c2rust_unnamed_1.c2rust_unnamed.e);
         }
         97 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             outc(z, (*z).c2rust_unnamed_2.c2rust_unnamed.h);
         }
         105 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             outc(z, (*z).c2rust_unnamed_2.c2rust_unnamed.l);
         }
         113 => {
-            cyc = cyc.wrapping_add(12 as i32 as u32);
+            cyc = cyc.wrapping_add(12);
             outc(z, 0 as i32 as uint8_t);
         }
         163 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             outi(z);
         }
         179 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             outi(z);
             if (*z).c2rust_unnamed_0.c2rust_unnamed.b as i32 > 0 as i32 {
                 (*z).pc = ((*z).pc as i32 - 2 as i32) as uint16_t;
-                cyc = cyc.wrapping_add(5 as i32 as u32);
+                cyc = cyc.wrapping_add(5);
                 (*z).mem_ptr = ((*z).pc as i32 + 1 as i32) as uint16_t;
             }
         }
         171 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             outd(z);
         }
         187 => {
-            cyc = cyc.wrapping_add(16 as i32 as u32);
+            cyc = cyc.wrapping_add(16);
             outd(z);
             if (*z).c2rust_unnamed_0.c2rust_unnamed.b as i32 > 0 as i32 {
                 (*z).pc = ((*z).pc as i32 - 2 as i32) as uint16_t;
-                cyc = cyc.wrapping_add(5 as i32 as u32);
+                cyc = cyc.wrapping_add(5);
                 (*z).mem_ptr = ((*z).pc as i32 + 1 as i32) as uint16_t;
             }
         }
         66 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             sbchl(z, (*z).c2rust_unnamed_0.bc);
         }
         82 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             sbchl(z, (*z).c2rust_unnamed_1.de);
         }
         98 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             sbchl(z, (*z).c2rust_unnamed_2.hl);
         }
         114 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             sbchl(z, (*z).sp);
         }
         74 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             adchl(z, (*z).c2rust_unnamed_0.bc);
         }
         90 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             adchl(z, (*z).c2rust_unnamed_1.de);
         }
         106 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             adchl(z, (*z).c2rust_unnamed_2.hl);
         }
         122 => {
-            cyc = cyc.wrapping_add(15 as i32 as u32);
+            cyc = cyc.wrapping_add(15);
             adchl(z, (*z).sp);
         }
         67 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             let addr: uint16_t = nextw(z);
             ww(z, addr, (*z).c2rust_unnamed_0.bc);
             (*z).mem_ptr = (addr as i32 + 1 as i32) as uint16_t;
         }
         83 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             let addr_0: uint16_t = nextw(z);
             ww(z, addr_0, (*z).c2rust_unnamed_1.de);
             (*z).mem_ptr = (addr_0 as i32 + 1 as i32) as uint16_t;
         }
         99 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             let addr_1: uint16_t = nextw(z);
             ww(z, addr_1, (*z).c2rust_unnamed_2.hl);
             (*z).mem_ptr = (addr_1 as i32 + 1 as i32) as uint16_t;
         }
         115 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             let addr_2: uint16_t = nextw(z);
             ww(z, addr_2, (*z).sp);
             (*z).mem_ptr = (addr_2 as i32 + 1 as i32) as uint16_t;
         }
         75 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             let addr_3: uint16_t = nextw(z);
             (*z).c2rust_unnamed_0.bc = rw(z, addr_3);
             (*z).mem_ptr = (addr_3 as i32 + 1 as i32) as uint16_t;
         }
         91 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             let addr_4: uint16_t = nextw(z);
             (*z).c2rust_unnamed_1.de = rw(z, addr_4);
             (*z).mem_ptr = (addr_4 as i32 + 1 as i32) as uint16_t;
         }
         107 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             let addr_5: uint16_t = nextw(z);
             (*z).c2rust_unnamed_2.hl = rw(z, addr_5);
             (*z).mem_ptr = (addr_5 as i32 + 1 as i32) as uint16_t;
         }
         123 => {
-            cyc = cyc.wrapping_add(20 as i32 as u32);
+            cyc = cyc.wrapping_add(20);
             let addr_6: uint16_t = nextw(z);
             (*z).sp = rw(z, addr_6);
             (*z).mem_ptr = (addr_6 as i32 + 1 as i32) as uint16_t;
         }
         68 | 84 | 100 | 116 | 76 | 92 | 108 | 124 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z)
                 .c2rust_unnamed
                 .c2rust_unnamed
@@ -4065,19 +4065,19 @@ unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
             );
         }
         70 | 102 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z).interrupt_mode = 0 as i32 as uint8_t;
         }
         86 | 118 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z).interrupt_mode = 1 as i32 as uint8_t;
         }
         94 | 126 => {
-            cyc = cyc.wrapping_add(8 as i32 as u32);
+            cyc = cyc.wrapping_add(8);
             (*z).interrupt_mode = 2 as i32 as uint8_t;
         }
         103 => {
-            cyc = cyc.wrapping_add(18 as i32 as u32);
+            cyc = cyc.wrapping_add(18);
             let mut a: uint8_t = (*z).c2rust_unnamed.c2rust_unnamed.a;
             let mut val_0: uint8_t = rb(z, (*z).c2rust_unnamed_2.hl);
             (*z)
@@ -4103,7 +4103,7 @@ unsafe fn exec_opcode_ed(z: *mut z80, mut opcode: uint8_t) -> u32 {
                 as uint16_t;
         }
         111 => {
-            cyc = cyc.wrapping_add(18 as i32 as u32);
+            cyc = cyc.wrapping_add(18);
             let mut a_0: uint8_t = (*z).c2rust_unnamed.c2rust_unnamed.a;
             let mut val_1: uint8_t = rb(z, (*z).c2rust_unnamed_2.hl);
             (*z)

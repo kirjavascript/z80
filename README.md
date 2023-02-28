@@ -8,11 +8,11 @@ This emulator passes both the ZEXDOC and ZEXALL Z80 instruction tests. It has al
 
 This project is under the MIT license, except the files in `roms` which are provided for convenience to test the z80 core implementation. These files authors' and licenses can be seen in the source files (.z80/.src files).
 
-This emulator is a fork of [carmiker/jgz80](https://github.com/carmiker/jgz80)
+This emulator is a port of [carmiker/jgz80](https://github.com/carmiker/jgz80)
 
 ## Tests
 
-You can run the tests by running `cargo test --release -- --no-capture`, which outputs:
+You can run the tests by running `cargo test --release -- --nocapture`, which outputs:
 
 ```
 *** TEST: roms/prelim.com

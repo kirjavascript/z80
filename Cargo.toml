@@ -8,6 +8,9 @@ description = "z80 emulator"
 readme = "README.md"
 documentation = "https://docs.rs/z80"
 repository = "https://github.com/kirjavascript/z80"
+exclude = [
+    "roms/*"
+]
 
 [lib]
 name = "z80"

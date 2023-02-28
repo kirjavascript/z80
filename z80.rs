@@ -35,6 +35,7 @@ type uint32_t = u32;
 const ASSERT: u32 = 2;
 const PULSE: u32 = 1;
 
+/// Trait for controlling IO behaviour
 pub trait Z80_io {
     fn read_byte(&self, addr: u16) -> u8;
     fn write_byte(&mut self, addr: u16, value: u8);
@@ -42,9 +43,7 @@ pub trait Z80_io {
     fn port_out(&mut self, addr: u16, value: u8);
 }
 
-// pub struct Z80 <T: z80Ctrl>{
-//     pub ctrl: T,
-
+/// Z80 CPU
 pub struct Z80 <T: Z80_io> {
     pub ctrl: T,
     pub pc: uint16_t,
@@ -179,6 +178,12 @@ impl<T: Z80_io> Z80<T> {
             self.test_finished = true;
         }
         self.ctrl.port_out(addr, value);
+    }
+    pub fn read_byte(&self, addr: u16) -> u8 {
+        self.ctrl.read_byte(addr)
+    }
+    pub fn write_byte(&mut self, addr: u16, value: u8) {
+        self.ctrl.write_byte(addr, value);
     }
     pub fn step(&mut self) -> u32 {
         unsafe { step_s(self) }

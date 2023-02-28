@@ -111,7 +111,6 @@ impl z80 {
             irq_data: 0,
             irq_pending: 0,
             nmi_pending: 0,
-            // iff1_iff2_halted: [0; 1],
             halted: false,
             iff1: false,
             iff2: false,

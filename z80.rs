@@ -73,8 +73,6 @@ pub struct z80 {
     #[bitfield(name = "iff2", ty = "bool", bits = "1..=1")]
     #[bitfield(name = "halted", ty = "bool", bits = "2..=2")]
     pub iff1_iff2_halted: [u8; 1],
-    #[bitfield(padding)]
-    pub c2rust_padding: [u8; 6],
 }
 
 impl z80 {
@@ -118,7 +116,6 @@ impl z80 {
             irq_pending: 0,
             nmi_pending: 0,
             iff1_iff2_halted: [0; 1],
-            c2rust_padding: [0; 6],
         }
     }
     pub fn init(&mut self) {

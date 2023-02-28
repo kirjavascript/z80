@@ -2,7 +2,6 @@ use crate::z80::{z80, z80Ctrl};
 
 struct Memory {
     pub mem: [u8; 0x10000],
-    pub test_finished: bool,
 }
 
 impl z80Ctrl for Memory {
@@ -17,26 +16,17 @@ impl z80Ctrl for Memory {
         0xff
     }
     fn port_out(&mut self, _addr: u16, _value: u8) {
-        self.test_finished = true;
-    }
-    fn test_finished(&self) -> bool {
-        self.test_finished
     }
 }
 
-fn run_test(rom: &[u8], cyc_expected: u64) {
-    let mut memory = Box::new(Memory {
-        mem: [0; 0x10000],
-        test_finished: false,
-    });
+fn run_test(cpu: &mut z80, rom: &[u8], cyc_expected: u64) {
 
     for (i, byte) in rom.iter().enumerate() {
-        memory.mem[0x100 + i] = *byte;
+        cpu.ctrl.write_byte(0x100 + i as u16, *byte);
     }
 
     let mut cyc: u64 = 0;
 
-    let mut cpu = z80::new(memory);
     cpu.init();
     cpu.pc = 0x100;
     cpu.ctrl.write_byte(0,0xd3);
@@ -46,7 +36,7 @@ fn run_test(rom: &[u8], cyc_expected: u64) {
     cpu.ctrl.write_byte(7,0xc9);
 
     let mut nb_instructions: u64 = 0;
-    while !cpu.ctrl.test_finished() {
+    while !cpu.test_finished {
         nb_instructions += 1;
         cyc = cyc.wrapping_add(cpu.step().into());
     }
@@ -64,7 +54,13 @@ fn run_test(rom: &[u8], cyc_expected: u64) {
 
 #[test]
 pub fn main() {
-    run_test(include_bytes!("./roms/prelim.com"), 8721);
-    run_test(include_bytes!("./roms/zexdoc.cim"), 46734978649);
-    run_test(include_bytes!("roms/zexall.cim"), 46734978649);
+    let mut memory = Box::new(Memory {
+        mem: [0; 0x10000],
+    });
+
+    let mut cpu = z80::new(memory);
+
+    run_test(&mut cpu, include_bytes!("./roms/prelim.com"), 8721);
+    run_test(&mut cpu, include_bytes!("./roms/zexdoc.cim"), 46734978649);
+    run_test(&mut cpu, include_bytes!("roms/zexall.cim"), 46734978649);
 }

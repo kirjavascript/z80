@@ -40,8 +40,6 @@ pub trait z80Ctrl {
     fn write_byte(&mut self, addr: u16, value: u8);
     fn port_in(&self, addr: u16) -> u8;
     fn port_out(&mut self, addr: u16, value: u8);
-    #[cfg(test)]
-    fn test_finished(&self) -> bool;
 }
 
 pub struct z80 {
@@ -69,6 +67,8 @@ pub struct z80 {
     halted: bool,
     iff1: bool,
     iff2: bool,
+    #[cfg(test)]
+    pub test_finished: bool,
 }
 
 impl z80 {
@@ -115,6 +115,8 @@ impl z80 {
             halted: false,
             iff1: false,
             iff2: false,
+            #[cfg(test)]
+            test_finished: false,
         }
     }
     pub fn init(&mut self) {
@@ -141,6 +143,10 @@ impl z80 {
         self.irq_pending = 0 as i32 as uint8_t;
         self.nmi_pending = 0 as i32 as uint8_t;
         self.irq_data = 0 as i32 as uint8_t;
+        #[cfg(test)]
+        {
+            self.test_finished = false;
+        }
     }
     pub fn step(&mut self) -> u32 {
         unsafe { z80_step_s(self) }
@@ -169,87 +175,91 @@ impl z80 {
         self.ctrl.port_in(addr)
     }
     fn internal_port_out(&mut self, addr: u16, value: u8) {
+        #[cfg(test)]
+        {
+            self.test_finished = true;
+        }
         self.ctrl.port_out(addr, value);
     }
 }
 
 #[derive(Copy, Clone)]
-union C2RustUnnamed_0 {
+pub union C2RustUnnamed_0 {
     pub c2rust_unnamed: C2RustUnnamed_1,
     pub h_l_: uint16_t,
 }
 #[derive(Copy, Clone)]
-struct C2RustUnnamed_1 {
+pub struct C2RustUnnamed_1 {
     pub l_: uint8_t,
     pub h_: uint8_t,
 }
 #[derive(Copy, Clone)]
-union C2RustUnnamed_2 {
+pub union C2RustUnnamed_2 {
     pub c2rust_unnamed: C2RustUnnamed_3,
     pub d_e_: uint16_t,
 }
 #[derive(Copy, Clone)]
-struct C2RustUnnamed_3 {
+pub struct C2RustUnnamed_3 {
     pub e_: uint8_t,
     pub d_: uint8_t,
 }
 #[derive(Copy, Clone)]
-union C2RustUnnamed_4 {
+pub union C2RustUnnamed_4 {
     pub c2rust_unnamed: C2RustUnnamed_5,
     pub b_c_: uint16_t,
 }
 #[derive(Copy, Clone)]
-struct C2RustUnnamed_5 {
+pub struct C2RustUnnamed_5 {
     pub c_: uint8_t,
     pub b_: uint8_t,
 }
 #[derive(Copy, Clone)]
-union C2RustUnnamed_6 {
+pub union C2RustUnnamed_6 {
     pub c2rust_unnamed: C2RustUnnamed_7,
     pub a_f_: uint16_t,
 }
 #[derive(Copy, Clone)]
-struct C2RustUnnamed_7 {
+pub struct C2RustUnnamed_7 {
     pub f_: uint8_t,
     pub a_: uint8_t,
 }
 #[derive(Copy, Clone)]
-union C2RustUnnamed_8 {
+pub union C2RustUnnamed_8 {
     pub c2rust_unnamed: C2RustUnnamed_9,
     pub hl: uint16_t,
 }
 #[derive(Copy, Clone)]
-struct C2RustUnnamed_9 {
+pub struct C2RustUnnamed_9 {
     pub l: uint8_t,
     pub h: uint8_t,
 }
 #[derive(Copy, Clone)]
-union C2RustUnnamed_10 {
+pub union C2RustUnnamed_10 {
     pub c2rust_unnamed: C2RustUnnamed_11,
     pub de: uint16_t,
 }
 #[derive(Copy, Clone)]
-struct C2RustUnnamed_11 {
+pub struct C2RustUnnamed_11 {
     pub e: uint8_t,
     pub d: uint8_t,
 }
 #[derive(Copy, Clone)]
-union C2RustUnnamed_12 {
+pub union C2RustUnnamed_12 {
     pub c2rust_unnamed: C2RustUnnamed_13,
     pub bc: uint16_t,
 }
 #[derive(Copy, Clone)]
-struct C2RustUnnamed_13 {
+pub struct C2RustUnnamed_13 {
     pub c: uint8_t,
     pub b: uint8_t,
 }
 #[derive(Copy, Clone)]
-union C2RustUnnamed_14 {
+pub union C2RustUnnamed_14 {
     pub c2rust_unnamed: C2RustUnnamed_15,
     pub af: uint16_t,
 }
 #[derive(Copy, Clone)]
-struct C2RustUnnamed_15 {
+pub struct C2RustUnnamed_15 {
     pub f: uint8_t,
     pub a: uint8_t,
 }

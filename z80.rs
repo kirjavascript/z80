@@ -183,81 +183,97 @@ impl z80 {
 }
 
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub union C2RustUnnamed_0 {
     pub c2rust_unnamed: C2RustUnnamed_1,
     pub h_l_: uint16_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct C2RustUnnamed_1 {
     pub l_: uint8_t,
     pub h_: uint8_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub union C2RustUnnamed_2 {
     pub c2rust_unnamed: C2RustUnnamed_3,
     pub d_e_: uint16_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct C2RustUnnamed_3 {
     pub e_: uint8_t,
     pub d_: uint8_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub union C2RustUnnamed_4 {
     pub c2rust_unnamed: C2RustUnnamed_5,
     pub b_c_: uint16_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct C2RustUnnamed_5 {
     pub c_: uint8_t,
     pub b_: uint8_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub union C2RustUnnamed_6 {
     pub c2rust_unnamed: C2RustUnnamed_7,
     pub a_f_: uint16_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct C2RustUnnamed_7 {
     pub f_: uint8_t,
     pub a_: uint8_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub union C2RustUnnamed_8 {
     pub c2rust_unnamed: C2RustUnnamed_9,
     pub hl: uint16_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct C2RustUnnamed_9 {
     pub l: uint8_t,
     pub h: uint8_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub union C2RustUnnamed_10 {
     pub c2rust_unnamed: C2RustUnnamed_11,
     pub de: uint16_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct C2RustUnnamed_11 {
     pub e: uint8_t,
     pub d: uint8_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub union C2RustUnnamed_12 {
     pub c2rust_unnamed: C2RustUnnamed_13,
     pub bc: uint16_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct C2RustUnnamed_13 {
     pub c: uint8_t,
     pub b: uint8_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub union C2RustUnnamed_14 {
     pub c2rust_unnamed: C2RustUnnamed_15,
     pub af: uint16_t,
 }
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct C2RustUnnamed_15 {
     pub f: uint8_t,
     pub a: uint8_t,

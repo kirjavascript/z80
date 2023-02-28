@@ -150,9 +150,6 @@ impl<T: Z80_io> Z80<T> {
             self.test_finished = false;
         }
     }
-    pub fn step(&mut self) -> u32 {
-        unsafe { step_s(self) }
-    }
     fn internal_port_in(&self, addr: u16) -> u8 {
         #[cfg(test)]
         unsafe {
@@ -182,6 +179,50 @@ impl<T: Z80_io> Z80<T> {
             self.test_finished = true;
         }
         self.ctrl.port_out(addr, value);
+    }
+    pub fn step(&mut self) -> u32 {
+        unsafe { step_s(self) }
+    }
+    pub fn reset(&mut self) {
+        self.pc = 0 as i32 as uint16_t;
+        self.mem_ptr = 0 as i32 as uint16_t;
+        self.i = 0 as i32 as uint8_t;
+        self.r = 0 as i32 as uint8_t;
+        self.interrupt_mode = 0 as i32 as uint8_t;
+        self.iff_delay = 0 as i32 as uint8_t;
+        self.iff1 = 0 as i32 != 0;
+        self.iff2 = 0 as i32 != 0;
+        self.halted = 0 as i32 != 0;
+        self.nmi_pending = 0 as i32 as uint8_t;
+    }
+
+    pub fn assert_irq(&mut self, mut data: uint8_t) {
+        self
+            .irq_pending = (self.irq_pending as i32 | ASSERT as i32)
+            as uint8_t;
+        self.irq_data = data;
+    }
+    pub fn assert_nmi(&mut self) {
+        self
+            .nmi_pending = (self.nmi_pending as i32 | ASSERT as i32)
+            as uint8_t;
+    }
+    pub fn pulse_nmi(&mut self) {
+        self
+            .nmi_pending = (self.nmi_pending as i32 | PULSE as i32)
+            as uint8_t;
+    }
+    pub fn clr_nmi(&mut self) {
+        self.nmi_pending = 0 as i32 as uint8_t;
+    }
+    pub fn pulse_irq(&mut self, mut data: uint8_t) {
+        self
+            .irq_pending = (self.irq_pending as i32 | PULSE as i32)
+            as uint8_t;
+        self.irq_data = data;
+    }
+    pub fn clr_irq(&mut self) {
+        self.irq_pending = 0 as i32 as uint8_t;
     }
 }
 
@@ -1101,19 +1142,6 @@ unsafe fn process_interrupts<T: Z80_io>(z: *mut Z80<T>) -> u32 {
     }
     return cyc;
 }
-#[no_mangle]
-pub unsafe fn reset<T: Z80_io>(z: *mut Z80<T>) {
-    (*z).pc = 0 as i32 as uint16_t;
-    (*z).mem_ptr = 0 as i32 as uint16_t;
-    (*z).i = 0 as i32 as uint8_t;
-    (*z).r = 0 as i32 as uint8_t;
-    (*z).interrupt_mode = 0 as i32 as uint8_t;
-    (*z).iff_delay = 0 as i32 as uint8_t;
-    (*z).iff1 = 0 as i32 != 0;
-    (*z).iff2 = 0 as i32 != 0;
-    (*z).halted = 0 as i32 != 0;
-    (*z).nmi_pending = 0 as i32 as uint8_t;
-}
 unsafe fn step_s<T: Z80_io>(z: *mut Z80<T>) -> u32 {
     let mut cyc: u32 = 0;
     if (*z).halted {
@@ -1125,16 +1153,13 @@ unsafe fn step_s<T: Z80_io>(z: *mut Z80<T>) -> u32 {
     cyc = cyc.wrapping_add(process_interrupts(z));
     return cyc;
 }
-#[no_mangle]
-pub unsafe fn set_pc<T: Z80_io>(z: *mut Z80<T>, mut pc: uint16_t) {
+unsafe fn _set_pc<T: Z80_io>(z: *mut Z80<T>, mut pc: uint16_t) {
     (*z).pc = pc;
 }
-#[no_mangle]
-pub unsafe fn set_sp<T: Z80_io>(z: *mut Z80<T>, mut sp: uint16_t) {
+unsafe fn _set_sp<T: Z80_io>(z: *mut Z80<T>, mut sp: uint16_t) {
     (*z).sp = sp;
 }
-#[no_mangle]
-pub unsafe fn step_n<T: Z80_io>(
+unsafe fn _step_n<T: Z80_io>(
     z: *mut Z80<T>,
     mut cycles: u32,
 ) -> u32 {
@@ -1143,40 +1168,6 @@ pub unsafe fn step_n<T: Z80_io>(
         cyc = cyc.wrapping_add(step_s(z));
     }
     return cyc;
-}
-#[no_mangle]
-pub unsafe fn assert_nmi<T: Z80_io>(z: *mut Z80<T>) {
-    (*z)
-        .nmi_pending = ((*z).nmi_pending as i32 | ASSERT as i32)
-        as uint8_t;
-}
-#[no_mangle]
-pub unsafe fn pulse_nmi<T: Z80_io>(z: *mut Z80<T>) {
-    (*z)
-        .nmi_pending = ((*z).nmi_pending as i32 | PULSE as i32)
-        as uint8_t;
-}
-#[no_mangle]
-pub unsafe fn clr_nmi<T: Z80_io>(z: *mut Z80<T>) {
-    (*z).nmi_pending = 0 as i32 as uint8_t;
-}
-#[no_mangle]
-pub unsafe fn assert_irq<T: Z80_io>(z: *mut Z80<T>, mut data: uint8_t) {
-    (*z)
-        .irq_pending = ((*z).irq_pending as i32 | ASSERT as i32)
-        as uint8_t;
-    (*z).irq_data = data;
-}
-#[no_mangle]
-pub unsafe fn pulse_irq<T: Z80_io>(z: *mut Z80<T>, mut data: uint8_t) {
-    (*z)
-        .irq_pending = ((*z).irq_pending as i32 | PULSE as i32)
-        as uint8_t;
-    (*z).irq_data = data;
-}
-#[no_mangle]
-pub unsafe fn clr_irq<T: Z80_io>(z: *mut Z80<T>) {
-    (*z).irq_pending = 0 as i32 as uint8_t;
 }
 unsafe fn exec_opcode<T: Z80_io>(z: *mut Z80<T>, mut opcode: uint8_t) -> u32 {
     let mut cyc: u32 = 0;

@@ -5,7 +5,7 @@
 
 
 mod z80;
-pub use z80::*;
+pub use self::z80::*;
 
 #[cfg(test)]
 mod z80_tests;

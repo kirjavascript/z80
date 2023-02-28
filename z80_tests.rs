@@ -1,10 +1,10 @@
-use crate::z80::{z80, z80Ctrl};
+use crate::z80::{Z80, Z80Ctrl};
 
 struct Memory {
     pub mem: [u8; 0x10000],
 }
 
-impl z80Ctrl for Memory {
+impl Z80Ctrl for Memory {
     fn read_byte(&self, addr: u16) -> u8 {
         self.mem[addr as usize]
     }
@@ -19,7 +19,7 @@ impl z80Ctrl for Memory {
     }
 }
 
-fn run_test(cpu: &mut z80, rom: &[u8], cyc_expected: u64) {
+fn run_test(cpu: &mut Z80, rom: &[u8], cyc_expected: u64) {
 
     for (i, byte) in rom.iter().enumerate() {
         cpu.ctrl.write_byte(0x100 + i as u16, *byte);
@@ -58,7 +58,7 @@ pub fn main() {
         mem: [0; 0x10000],
     });
 
-    let mut cpu = z80::new(memory);
+    let mut cpu = Z80::new(memory);
 
     run_test(&mut cpu, include_bytes!("./roms/prelim.com"), 8721);
     run_test(&mut cpu, include_bytes!("./roms/zexdoc.cim"), 46734978649);

@@ -21,8 +21,6 @@
 //!    fn write_byte(&mut self, addr: u16, value: u8) {
 //!        self.mem[addr as usize] = value;
 //!    }
-//!    fn port_in(&self, _addr: u16) -> u8 { 0xff }
-//!    fn port_out(&mut self, _addr: u16, _value: u8) { }
 //!}
 //!
 //!let mut cpu = Z80::new(IO {

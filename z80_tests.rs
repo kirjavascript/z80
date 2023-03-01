@@ -12,11 +12,6 @@ impl Z80_io for Memory {
     fn write_byte(&mut self, addr: u16, value: u8) {
         self.mem[addr as usize] = value;
     }
-    fn port_in(&self, _addr: u16) -> u8 {
-        0xff
-    }
-    fn port_out(&mut self, _addr: u16, _value: u8) {
-    }
 }
 
 fn run_test(cpu: &mut Z80<Memory>, rom: &[u8], cyc_expected: u64) {

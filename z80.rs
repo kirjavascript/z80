@@ -39,8 +39,8 @@ const PULSE: u32 = 1;
 pub trait Z80_io {
     fn read_byte(&self, addr: u16) -> u8;
     fn write_byte(&mut self, addr: u16, value: u8);
-    fn port_in(&self, addr: u16) -> u8;
-    fn port_out(&mut self, addr: u16, value: u8);
+    fn port_in(&self, _addr: u16) -> u8 { 0xff }
+    fn port_out(&mut self, _addr: u16, _value: u8) { }
 }
 
 /// Z80 CPU

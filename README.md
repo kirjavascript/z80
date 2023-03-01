@@ -2,10 +2,6 @@
 
 A fast and accurate instruction-stepped Z80 emulator written in C11 and ported to Rust with c2rust and manual refactoring.
 
-The Rust version appears to run about 25% faster than the C version when benchmarked on my machine. 
-
-It still uses unsafe (for now).
-
 This emulator passes both the ZEXDOC and ZEXALL Z80 instruction tests. It has also been verified correct against VisualZ80, and is known to run the entire ColecoVision, SG-1000, Master System, and Game Gear libraries. Additionally, it has been successfully integrated into Mega Drive/Genesis and Neo Geo emulators with unknown (but likely high or perfect) compatibility.
 
 ## Licensing

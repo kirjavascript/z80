@@ -1,10 +1,10 @@
 use crate::z80::{Z80, Z80_io};
 
-struct Memory {
+struct IO {
     pub mem: [u8; 0x10000],
 }
 
-impl Z80_io for Memory {
+impl Z80_io for IO {
     fn read_byte(&self, addr: u16) -> u8 {
         self.mem[addr as usize]
     }
@@ -14,21 +14,20 @@ impl Z80_io for Memory {
     }
 }
 
-fn run_test(cpu: &mut Z80<Memory>, rom: &[u8], cyc_expected: u64) {
-
+fn run_test(cpu: &mut Z80<IO>, rom: &[u8], cyc_expected: u64) {
     for (i, byte) in rom.iter().enumerate() {
-        cpu.ctrl.write_byte(0x100 + i as u16, *byte);
+        cpu.io.write_byte(0x100 + i as u16, *byte);
     }
 
     let mut cyc: u64 = 0;
 
     cpu.init();
     cpu.pc = 0x100;
-    cpu.ctrl.write_byte(0,0xd3);
-    cpu.ctrl.write_byte(1,0);
-    cpu.ctrl.write_byte(5,0xdb);
-    cpu.ctrl.write_byte(6,0);
-    cpu.ctrl.write_byte(7,0xc9);
+    cpu.io.write_byte(0,0xd3);
+    cpu.io.write_byte(1,0);
+    cpu.io.write_byte(5,0xdb);
+    cpu.io.write_byte(6,0);
+    cpu.io.write_byte(7,0xc9);
 
     let mut nb_instructions: u64 = 0;
     while !cpu.test_finished {
@@ -49,7 +48,7 @@ fn run_test(cpu: &mut Z80<Memory>, rom: &[u8], cyc_expected: u64) {
 
 #[test]
 pub fn main() {
-    let mut memory = Memory {
+    let mut memory = IO {
         mem: [0; 0x10000],
     };
 

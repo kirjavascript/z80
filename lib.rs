@@ -30,7 +30,7 @@
 //!let rom = vec![0, 0, 0]; // etc
 //!
 //!for (i, byte) in rom.iter().enumerate() {
-//!    cpu.write_byte(i as _, *byte);
+//!    cpu.io.write_byte(i as _, *byte);
 //!}
 //!
 //!loop {

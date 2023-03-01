@@ -45,7 +45,7 @@ pub trait Z80_io {
 
 /// Z80 CPU
 pub struct Z80 <T: Z80_io> {
-    pub ctrl: T,
+    pub io: T,
     pub pc: uint16_t,
     pub sp: uint16_t,
     pub ix: uint16_t,
@@ -74,9 +74,9 @@ pub struct Z80 <T: Z80_io> {
 }
 
 impl<T: Z80_io> Z80<T> {
-    pub fn new(ctrl: T) -> Self {
+    pub fn new(io: T) -> Self {
         Z80 {
-            ctrl,
+            io,
             pc: 0,
             sp: 0,
             ix: 0,
@@ -162,28 +162,22 @@ impl<T: Z80_io> Z80<T> {
                 loop {
                     let fresh0 = addr;
                     addr = addr.wrapping_add(1);
-                    print!("{}", String::from_utf8(vec![self.ctrl.read_byte(fresh0)]).unwrap());
-                    if !(self.ctrl.read_byte(addr) as i32 != '$' as i32 as i32) {
+                    print!("{}", String::from_utf8(vec![self.io.read_byte(fresh0)]).unwrap());
+                    if !(self.io.read_byte(addr) as i32 != '$' as i32 as i32) {
                         break;
                     }
                 }
             }
 
         }
-        self.ctrl.port_in(addr)
+        self.io.port_in(addr)
     }
     fn internal_port_out(&mut self, addr: u16, value: u8) {
         #[cfg(test)]
         {
             self.test_finished = true;
         }
-        self.ctrl.port_out(addr, value);
-    }
-    pub fn read_byte(&self, addr: u16) -> u8 {
-        self.ctrl.read_byte(addr)
-    }
-    pub fn write_byte(&mut self, addr: u16, value: u8) {
-        self.ctrl.write_byte(addr, value);
+        self.io.port_out(addr, value);
     }
     pub fn step(&mut self) -> u32 {
         unsafe { step_s(self) }
@@ -363,23 +357,23 @@ unsafe fn flag_set<T: Z80_io>(z: *mut Z80<T>, mut bit: Flagbit, mut val: bool) {
 }
 #[inline]
 unsafe fn rb<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t) -> uint8_t {
-    return (*z).ctrl.read_byte(addr);
+    return (*z).io.read_byte(addr);
 }
 #[inline]
 unsafe fn wb<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t, mut val: uint8_t) {
-    (*z).ctrl.write_byte(addr, val);
+    (*z).io.write_byte(addr, val);
 }
 #[inline]
 unsafe fn rw<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t) -> uint16_t {
     return (
-        ((*z).ctrl.read_byte((addr as i32 + 1 as i32) as uint16_t) as i32) << 8 as i32
-        | (*z).ctrl.read_byte(addr) as i32
+        ((*z).io.read_byte((addr as i32 + 1 as i32) as uint16_t) as i32) << 8 as i32
+        | (*z).io.read_byte(addr) as i32
     ) as uint16_t;
 }
 #[inline]
 unsafe fn ww<T: Z80_io>(z: *mut Z80<T>, mut addr: uint16_t, mut val: uint16_t) {
-    (*z).ctrl.write_byte(addr, (val as i32 & 0xff as i32) as uint8_t);
-    (*z).ctrl.write_byte(
+    (*z).io.write_byte(addr, (val as i32 & 0xff as i32) as uint8_t);
+    (*z).io.write_byte(
         (addr as i32 + 1 as i32) as uint16_t,
         (val as i32 >> 8 as i32) as uint8_t,
     );

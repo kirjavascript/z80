@@ -29,12 +29,15 @@
 //!    mem: [0; 0x10000],
 //!});
 //!
+//!let rom = vec![0, 0, 0]; // etc
+//!
 //!for (i, byte) in rom.iter().enumerate() {
-//!    cpu.write_byte(i, *byte);
+//!    cpu.write_byte(i as _, *byte);
 //!}
 //!
 //!loop {
 //!    cpu.step();
+//!    break;
 //!}
 //!```
 
